@@ -3,1737 +3,975 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self';
-                   script-src 'self' https://cdn.tailwindcss.com https://www.gstatic.com/firebasejs/ https://generativelanguage.googleapis.com 'unsafe-inline';
-                   style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline';
-                   font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
-                   img-src 'self' data: https://placehold.co;
-                   connect-src 'self' wss://*.firebaseio.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://generativelanguage.googleapis.com;
-                   frame-src 'self';
-                   object-src 'none';
-                   base-uri 'self';
-                   form-action 'self';">
-    <title>جادوگر تصویر - نسخه آلترا دولوکس V3 (فوق امن)</title>
+    <title>بازی دوز پیشرفته با موسیقی</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #7c3aed; /* purple-600 */
-            --primary-color-hover: #6d28d9; /* purple-700 */
-            --secondary-color: #5b21b6; /* violet-700 */
-            --accent-color: #ec4899; /* pink-500 */
-            --success-color: #10b981; /* green-500 */
-            --error-color: #ef4444; /* red-500 */
-            --warning-color: #f59e0b; /* amber-500 */
-            --info-color: #3b82f6; /* blue-500 */
-            --text-dark: #111827; /* gray-900 */
-            --text-light: #f9fafb; /* gray-50 */
-            --bg-light: #ffffff;
-            --bg-dark: #1f2937; /* gray-800 */
-            --bg-soft-light: #f3f4f6; /* gray-100 */
-            --bg-soft-dark: #374151; /* gray-700 */
-            --border-light: #e5e7eb; /* gray-200 */
-            --border-dark: #4b5563; /* gray-600 */
-            --bg-gradient: linear-gradient(145deg, var(--secondary-color) 0%, var(--primary-color) 50%, #c026d3 100%);
-        }
-        html.dark {
-            --text-dark: #f3f4f6; /* gray-100 */
-            --text-light: #1f2937; /* gray-800 */
-            --bg-light: #1f2937; /* gray-800 */
-            --bg-dark: #111827; /* gray-900 */
-            --bg-soft-light: #374151; /* gray-700 */
-            --bg-soft-dark: #1e293b; /* slate-800 */
-            --border-light: #4b5563; /* gray-600 */
-            --border-dark: #374151; /* gray-700 */
-            --bg-gradient: linear-gradient(145deg, #3730a3 0%, #5b21b6 50%, #a21caf 100%);
-        }
-
         body {
             font-family: 'Vazirmatn', sans-serif;
+            background-color: #0b1120; /* Darker Slate/Navy */
+            color: #e2e8f0; /* text-slate-200 */
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center; /* Ensure vertical centering */
             min-height: 100vh;
-            background: var(--bg-gradient);
-            color: var(--text-dark);
             margin: 0;
-            padding: 0.5rem;
-            overflow-x: hidden;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        .main-container {
-            background-color: rgba(255,255,255,0.85);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
             padding: 1rem;
-            border-radius: 2rem;
-            box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.5);
+            overflow-x: hidden;
+        }
+        .container-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             width: 100%;
-            max-width: 850px;
-            text-align: center;
-            margin-top: 1rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255,255,255,0.3);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            flex-grow: 1;
         }
-        html.dark .main-container {
-            background-color: rgba(31, 41, 55, 0.85);
-            border: 1px solid rgba(75, 85, 99, 0.3);
+        .container {
+            width: 100%;
+            max-width: 680px; /* Max width for the game container */
+            background-color: rgba(23, 37, 60, 0.88); /* Darker, slightly transparent */
+            padding: 20px;
+            border-radius: 18px; /* More rounded */
+            box-shadow: 0 12px 35px rgba(0,0,0,0.7);
+            border: 1px solid #2c3e50; /* Darker border */
         }
-
-        /* Tabs */
-        .tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-light); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-        .tabs::-webkit-scrollbar { display: none; }
-        .tab-button {
-            padding: 0.75rem 1rem; font-weight: 600; cursor: pointer;
-            border-bottom: 3px solid transparent; transition: all 0.3s ease;
-            color: #6b7280;
-            html.dark & { color: #9ca3af; }
-            margin-bottom: -2px; flex-shrink: 0; position: relative;
+        .board-outer-container { /* New container to help center the board itself */
+            display: flex;
+            justify-content: center; /* Horizontally center the board-container */
+            width: 100%;
+            margin-bottom: 20px; /* Space below board */
         }
-        .tab-button .tab-loading-indicator {
-            display: none;
-            position: absolute;
-            bottom: -2px; left: 0; right: 0; height: 3px;
-            background-color: var(--accent-color);
-            animation: tabLoad 1s infinite;
-            border-radius: 2px;
+        .board-container {
+            position: relative;
+            /* margin removed as board-outer-container handles it */
         }
-        @keyframes tabLoad {
-            0% { transform: translateX(-100%); opacity: 0.5; }
-            50% { transform: translateX(0%); opacity: 1; }
-            100% { transform: translateX(100%); opacity: 0.5; }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 300px; /* Fixed width for consistent sizing */
+            height: 300px;/* Fixed height */
+            perspective: 1000px;
+            margin: 0 auto; /* Center board within its direct parent if parent is wider */
         }
-        .tab-button.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-        .tab-button:hover:not(.active) { color: var(--primary-color-hover); }
-        .tab-content { display: none; animation: fadeIn 0.5s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Style Presets & Aspect Ratio */
-        .input-options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .style-preset-select, .aspect-ratio-select {
-            padding: 0.65rem 1rem; border-radius: 0.5rem; border: 2px solid var(--border-light);
-            background-color: var(--bg-light); color: var(--text-dark);
-            transition: border-color 0.3s ease; appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: left 0.75rem center; padding-left: 2.5rem; width: 100%;
+        @media (max-width: 480px) {
+            .board {
+                width: clamp(240px, 75vw, 280px); /* Responsive width with min/max */
+                height: clamp(240px, 75vw, 280px);
+                gap: 10px;
+            }
+             .cell { font-size: 2.8rem !important; }
+             .controls-grid { grid-template-columns: 1fr; }
         }
-        html.dark .style-preset-select, html.dark .aspect-ratio-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");}
-        .style-preset-select:focus, .aspect-ratio-select:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.3); }
-        .recently-used-styles-label { font-size: 0.8rem; color: #6b7280; html.dark & { color: #9ca3af; } margin-top: 0.5rem; text-align: right;}
-
-        /* Textarea with Character Counter */
-        .textarea-wrapper { position: relative; margin-bottom: 0.5rem; }
-        textarea { resize: vertical; min-height: 100px; border-radius: 0.75rem; border: 2px solid var(--border-light); transition: all 0.35s ease; background-color: var(--bg-light); color: var(--text-dark); width: 100%; padding: 0.75rem; }
-        textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.25); }
-        .char-counter { position: absolute; bottom: 8px; left: 10px; font-size: 0.75rem; color: #6b7280; html.dark & { color: #9ca3af;} }
-        .prompt-tip { font-size: 0.75rem; color: #4b5563; html.dark & { color: #9ca3af; } margin-top: 0.25rem; text-align: right; }
-
-
-        /* Buttons */
-        .btn { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); padding: 0.75rem 1.25rem; font-weight: 600; border-radius: 0.625rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; text-shadow: 0 1px 1px rgba(0,0,0,0.05); border: none; cursor: pointer; }
-        .btn-primary { background: var(--primary-color); color: white; }
-        .btn-primary:hover { background: var(--primary-color-hover); box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3); transform: translateY(-2px); }
-        .btn-secondary { background-color: #64748b; color: white; }
-        html.dark .btn-secondary { background-color: var(--bg-soft-dark); }
-        .btn-secondary:hover { background-color: #475569; html.dark & { background-color: #334155; } box-shadow: 0 5px 15px rgba(100, 116, 139, 0.2); transform: translateY(-2px); }
-        .btn-danger { background-color: var(--error-color); color: white; }
-        .btn-danger:hover { background-color: #dc2626; }
-        .btn-warning { background-color: var(--warning-color); color: white; }
-        .btn-warning:hover { background-color: #d97706; }
-        .btn-outline { background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); }
-        .btn-outline:hover { background-color: rgba(124, 58, 237, 0.1); }
-        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.875rem; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; background-color: #9ca3af !important; color: #e5e7eb !important; border-color: #9ca3af !important; }
-
-        /* Loader, Progress Bar & Messages */
-        .loader-container { display: flex; flex-direction:column; justify-content: center; align-items: center; min-height: 80px; margin-top: 1.25rem; }
-        .loader { width: 36px; height: 36px; border-radius: 50%; display: inline-block; position: relative; border: 3px solid; border-color: var(--primary-color) var(--primary-color) transparent transparent; animation: rotation 1s linear infinite; display: none; }
-        .loader::after { content: ''; box-sizing: border-box; position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: auto; border: 3px solid; border-color: transparent transparent var(--accent-color) var(--accent-color); width: 24px; height: 24px; border-radius: 50%; animation: rotationBack 0.5s linear infinite; transform-origin: center center; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes rotationBack { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
-        #loadingStatusText { font-size: 0.85rem; color: var(--text-dark); margin-top: 0.5rem; display: none; }
-        #generationProgressBarContainer { width: 80%; max-width: 300px; height: 8px; background-color: var(--border-light); border-radius: 4px; overflow: hidden; margin-top: 0.75rem; display: none; }
-        #generationProgressBar { width: 0%; height: 100%; background-color: var(--primary-color); border-radius: 4px; transition: width 0.3s ease-out; }
-
-
-        .message-box { padding: 0.75rem 1rem; border-radius: 0.5rem; margin-top: 1.25rem; border: 1px solid transparent; display: flex; align-items: center; gap: 0.5rem; animation: fadeInScaleUp 0.4s ease-out; font-size: 0.9rem; }
-        .error-message { background-color: #fee2e2; color: #b91c1c; border-color: #fca5a5; html.dark & { background-color: #450a0a; color: #fecaca; border-color: #7f1d1d;}}
-        .success-message { background-color: #d1fae5; color: #065f46; border-color: #6ee7b7; html.dark & { background-color: #047857; color: #a7f3d0; border-color: #34d399;}}
-
-        .toast-notification { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 5000; background-color: var(--text-dark); color: var(--text-light); padding: 0.75rem 1.25rem; border-radius: 0.75rem; box-shadow: 0 8px 25px rgba(0,0,0,0.2); display: none; animation: slideInUp 0.3s ease-out; align-items: center; gap: 0.5rem; }
-        .toast-notification.success { background-color: var(--success-color); color: white; }
-        .toast-notification.error { background-color: var(--error-color); color: white; }
-        .toast-notification.info { background-color: var(--info-color); color: white; }
-        .toast-notification.warning { background-color: var(--warning-color); color: black; }
-        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Generated Image Area */
-        .generated-image-wrapper { margin-top: 1.5rem; position: relative; }
-        .generated-image-container { border: 3px dashed var(--border-light); padding: 0.75rem; border-radius: 1rem; min-height: 200px; display: flex; align-items: center; justify-content: center; background-color: var(--bg-dark); html.dark & { background-color: var(--bg-soft-dark); } transition: all 0.4s ease; overflow: hidden; }
-        .generated-image { max-width: 100%; max-height: 350px; border-radius: 0.75rem; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); opacity: 0; transform: scale(0.92) rotate(-1deg); transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.1s, transform 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.1s; cursor: zoom-in; }
-        .generated-image.visible { opacity: 1; transform: scale(1) rotate(0deg); }
-        .placeholder-text { color: #4b5563; html.dark & { color: #9ca3af; } font-size: 1rem; transition: opacity 0.3s ease; padding: 1rem; }
-        .title-icon { font-size: 2rem; margin-bottom: 0.1rem; color: var(--primary-color); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1)); }
-        .action-buttons { margin-top: 1rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; opacity: 0; transform: translateY(15px); transition: opacity 0.5s ease-out 0.25s, transform 0.5s ease-out 0.25s; }
-        .action-buttons.visible { opacity: 1; transform: translateY(0); }
-        .app-footer { margin-top: 2rem; font-size: 0.75rem; color: rgba(237, 237, 237, 0.85); font-weight: 300; }
-        .app-footer a { color: rgba(255, 255, 255, 0.95); text-decoration: none; font-weight: 500; }
-        @keyframes fadeInScaleUp { from { opacity: 0; transform: scale(0.95) translateY(-5px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-
-        .coin-display, .user-id-display, .theme-toggle {
-            position: fixed; background-color: rgba(31, 41, 55, 0.85); backdrop-filter: blur(5px);
-            color: white; padding: 0.4rem 0.8rem; border-radius: 9999px;
-            font-size: 0.8rem; font-weight: 500; display: flex; align-items: center;
-            gap: 0.4rem; box-shadow: 0 3px 8px rgba(0,0,0,0.25); z-index: 1000;
-            transition: transform 0.2s ease, background-color 0.3s ease;
+        .cell {
+            background-color: #2c3e50; /* Darker cell */
+            border: 2px solid #34495e; /* Slightly lighter border for contrast */
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.3), 0 5px 8px rgba(0,0,0,0.4);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
         }
-        .coin-display:hover, .theme-toggle:hover { transform: scale(1.05); }
-        .coin-display { top: 1rem; left: 1rem; } .coin-display .fa-coins { color: #fbbf24; animation: coinSpin 2s infinite linear; }
-        @keyframes coinSpin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
-        .user-id-display { top: 1rem; right: 1rem; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 0.5rem;}
-        .theme-toggle { top: 3.8rem; left: 1rem; cursor: pointer; }
-        html.dark .coin-display, html.dark .user-id-display, html.dark .theme-toggle { background-color: rgba(55, 65, 81, 0.85); }
-
-        /* Modal Styles */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(8px); animation: fadeInModal 0.3s ease; }
-        .modal-content-wrapper { display: flex; align-items: center; justify-content: center; min-height: 100%; padding: 1rem; }
-        .modal-content { background-color: var(--bg-light); padding: 20px; border-radius: 1rem; width: 95%; max-width: 800px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .modal-content img { display: block; width: 100%; height: auto; max-height: 75vh; object-fit: contain; margin: 0 auto; border-radius: 0.5rem; }
-        .close-modal { color: #aaa; html.dark & {color: #ccc;} float: left; font-size: 32px; font-weight: bold; position: absolute; top: 5px; left: 15px; }
-        .close-modal:hover, .close-modal:focus { color: var(--text-dark); text-decoration: none; cursor: pointer; }
-        @keyframes fadeInModal { from { opacity: 0 } to { opacity: 1 } }
-        .confirmation-modal-content { padding: 2rem; text-align: center; }
-        .confirmation-modal-content h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-dark); }
-        .confirmation-modal-content p { margin-bottom: 1.5rem; font-size: 0.9rem; color: #4b5563; html.dark & { color: #9ca3af; } }
-        .confirmation-buttons { display: flex; justify-content: center; gap: 1rem; }
-
-        /* List Styles (History, Favorites, Achievements) */
-        .list-container { max-height: 350px; overflow-y: auto; padding-right: 0.5rem; margin-top: 1rem; }
-        .list-item { background-color: var(--bg-soft-light); html.dark & { background-color: var(--bg-soft-dark); } border: 1px solid var(--border-light); padding: 0.75rem 1rem; border-radius: 0.75rem; margin-bottom: 0.75rem; display: flex; flex-direction: column; sm:flex-row; justify-content: space-between; align-items: sm:center; transition: background-color 0.2s ease, transform 0.2s ease; gap: 0.5rem; }
-        .list-item:hover { background-color: #e5e7eb; html.dark & { background-color: #4b5563; } transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .list-item-content { flex-grow: 1; }
-        .list-item-prompt { font-size: 0.85rem; color: var(--text-dark); cursor: default; word-break: break-word; margin-bottom: 0.25rem; }
-        .list-item-timestamp { font-size: 0.7rem; color: #6b7280; html.dark & { color: #9ca3af;} margin-bottom: 0.5rem; sm:margin-bottom: 0;}
-        .list-item-actions { display: flex; gap: 0.5rem; flex-shrink: 0; align-items: center; }
-        .list-item-actions button { margin-right: 0; }
-        .list-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 0.5rem; margin-left: 1rem; cursor: zoom-in; border: 1px solid var(--border-dark); }
-        .empty-state { color: #6b7280; html.dark & { color: #9ca3af;} text-align: center; padding: 2rem; font-size: 0.9rem; border: 2px dashed var(--border-light); border-radius: 0.75rem; }
-        .empty-state i { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
-
-        /* Skeleton Loader */
-        .skeleton-item { background-color: var(--bg-soft-light); html.dark & { background-color: var(--bg-soft-dark); } border-radius: 0.75rem; margin-bottom: 0.75rem; padding: 0.75rem 1rem; animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        .skeleton-item .skeleton-line { background-color: #e5e7eb; html.dark & { background-color: #4b5563; } height: 12px; border-radius: 4px; margin-bottom: 8px; }
-        .skeleton-item .skeleton-line:last-child { margin-bottom: 0; }
-        .skeleton-item .skeleton-line.w-1\/2 { width: 50%; } /* Escaped for Tailwind JIT */
-        .skeleton-item .skeleton-line.w-3\/4 { width: 75%; } /* Escaped for Tailwind JIT */
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-
-
-        /* Achievements */
-        .achievement-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
-        .achievement-item { background-color: var(--bg-soft-light); border-left: 5px solid var(--border-light); padding: 1rem; border-radius: 0.75rem; transition: all 0.3s ease; }
-        html.dark .achievement-item { background-color: var(--bg-soft-dark); border-left-color: var(--border-dark); }
-        .achievement-item.achieved { border-left-color: var(--success-color); background-color: #d1fae51a; html.dark & { background-color: #05966933; border-left-color: var(--success-color);}}
-        .achievement-item.achieved:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.1); }
-        .achievement-header { display: flex; align-items: center; margin-bottom: 0.5rem; }
-        .achievement-icon { font-size: 1.5rem; margin-left: 0.75rem; color: var(--primary-color); }
-        .achievement-item.achieved .achievement-icon { color: var(--success-color); }
-        .achievement-title { font-weight: 700; color: var(--text-dark); }
-        .achievement-desc { font-size: 0.8rem; color: #4b5563; html.dark & { color: #9ca3af;} }
-        .achievement-reward { font-size: 0.75rem; color: var(--primary-color); font-weight: 500; margin-top: 0.5rem; }
-        .achievement-item.achieved .achievement-reward { color: var(--success-color); }
-
-        /* Settings Tab */
-        .settings-section { margin-bottom: 2rem; padding: 1.5rem; background-color: var(--bg-soft-light); html.dark & { background-color: var(--bg-soft-dark); } border-radius: 1rem; }
-        .settings-section h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); border-bottom: 2px solid var(--border-light); padding-bottom: 0.5rem; }
-        .stat-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-light); }
-        .stat-item:last-child { border-bottom: none; }
-        .stat-label { font-weight: 500; color: var(--text-dark); }
-        .stat-value { font-weight: 600; color: var(--primary-color); }
-        .faq-item { margin-bottom: 0.75rem; }
-        .faq-question { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: var(--bg-light); html.dark & { background-color: #374151; } border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
-        .faq-answer { padding: 0.75rem; background-color: var(--bg-dark); html.dark & { background-color: #111827; } border-radius: 0 0 0.5rem 0.5rem; font-size: 0.85rem; display: none; color: var(--text-dark); }
-        .faq-item.open .faq-answer { display: block; }
-        .faq-item.open .faq-question i { transform: rotate(180deg); transition: transform 0.2s ease-in-out; }
-        .faq-item .faq-question i { transition: transform 0.2s ease-in-out; }
-
-
-        /* Daily Bonus */
-        #dailyBonusSection { margin-top:1rem; padding: 1rem; background-color: #e0f2fe; border: 2px solid #7dd3fc; border-radius: 0.75rem; text-align:center; html.dark & { background-color: #0c4a6e; border-color:#38bdf8; } }
-        #dailyBonusSection p { margin-bottom: 0.75rem; font-weight:500; }
-
-        /* Responsive Adjustments */
-        @media (min-width: 640px) { /* sm breakpoint */
-            body { padding: 1rem; }
-            .main-container { padding: 1.5rem; margin-top: 1.5rem;}
-            textarea { min-height: 110px; }
-            .btn { padding: 0.8rem 1.5rem; }
-            .title-icon { font-size: 2.25rem; }
-            .generated-image-container { min-height: 220px; padding: 1rem; }
-            .generated-image { max-height: 380px; }
-            .placeholder-text { font-size: 1.05rem; }
-            .action-buttons { flex-direction: row; }
-            .message-box, .toast-notification { font-size: 0.95rem; }
-            .app-footer { font-size: 0.8rem; }
-            .coin-display { font-size: 0.85rem; padding: 0.5rem 1rem; }
-            .tabs { justify-content: flex-start; }
-            .style-preset-select, .aspect-ratio-select { padding-top: 0.75rem; padding-bottom: 0.75rem;}
+        .cell:hover:not(.occupied) {
+            background-color: #34495e;
+            transform: scale(1.08) rotateY(7deg);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.2), 0 8px 12px rgba(0,0,0,0.5);
         }
-         @media (min-width: 768px) { /* md breakpoint */
-            .main-container { padding: 2rem; margin-top: 2rem;}
-            textarea { min-height: 130px; }
-            .generated-image { max-height: 420px; }
-            .tabs { justify-content: center; }
-         }
+        .cell.occupied { cursor: not-allowed; }
+        .cell.x { color: #29b6f6; /* Lighter Blue */ text-shadow: 0 0 18px #29b6f6, 0 0 8px #fff; }
+        .cell.o { color: #ffee58; /* Lighter Yellow */ text-shadow: 0 0 18px #ffee58, 0 0 8px #fff; }
+        .cell.win-animation { background-color: #00897b; /* Darker Teal */ animation: winPulse 0.8s infinite alternate; }
+        .cell.hint-cell {
+            background-color: rgba(76, 175, 80, 0.3) !important; /* Greenish hint */
+            border-color: #4CAF50 !important;
+            box-shadow: 0 0 15px #4CAF50;
+            animation: hintPulse 1s infinite alternate;
+        }
+        @keyframes hintPulse { from { opacity: 0.6; transform: scale(1); } to { opacity: 1; transform: scale(1.05); } }
+        @keyframes winPulse {
+            from { transform: scale(1); box-shadow: inset 0 0 5px rgba(0,0,0,0.3), 0 0 8px 4px rgba(0, 137, 123, 0.6); }
+            to { transform: scale(1.15); box-shadow: inset 0 0 8px rgba(0,0,0,0.2), 0 0 20px 10px rgba(0, 137, 123, 0.8); }
+        }
+        .winning-line-canvas { position: absolute; top: 0; left: 0; pointer-events: none; display: none; }
+
+        .status-bar { margin-bottom: 15px; text-align: center; }
+        .status-text {
+            font-size: 1.7rem; font-weight: bold; color: #bdc3c7; /* Lighter gray */
+            min-height: 3rem; transition: color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0; transform: translateY(10px);
+        }
+        .status-text.visible { opacity: 1; transform: translateY(0); }
+        .status-text.win-x { color: #29b6f6; }
+        .status-text.win-o { color: #ffee58; }
+        .status-text.draw { color: #ecf0f1; /* Very light gray */ }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Adjusted minmax */
+            gap: 15px; margin-bottom: 20px; background-color: #1c2a3s; /* Darker controls bg */
+            padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-size: 0.9rem; color: #bdc3c7; font-weight: 600; }
+        select, button, input[type="range"] {
+            padding: 10px 12px; border-radius: 8px; border: 1px solid #34495e;
+            background-color: #2c3e50; color: #ecf0f1; font-size: 0.95rem; cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        select:hover, button:hover { background-color: #34495e; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        button:active { transform: translateY(0); background-color: #41586e; }
+        .primary-button { background-color: #2980b9; border-color: #206694; } /* Peter River Blue */
+        .primary-button:hover { background-color: #206694; }
+        .secondary-button { background-color: #c0392b; border-color: #a53125; } /* Pomegranate Red */
+        .secondary-button:hover { background-color: #a53125; }
+        .tertiary-button { background-color: #27ae60; border-color: #1f8a4c; } /* Nephritis Green */
+        .tertiary-button:hover { background-color: #1f8a4c; }
+        .sound-button.muted, .music-button.muted { background-color: #7f8c8d; /* Asbestos Gray */ }
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #34495e; outline: none; opacity: 0.7; transition: opacity .2s; margin-top: 5px; }
+        input[type="range"]:hover { opacity: 1; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #29b6f6; border-radius: 50%; cursor: pointer; }
+        input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; background: #29b6f6; border-radius: 50%; cursor: pointer; border: none; }
+
+        .scoreboard { display: flex; justify-content: space-around; margin-bottom: 20px; background-color: #1c2a3s; padding: 15px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .score-item { text-align: center; font-size: 1rem; }
+        .score-item span { display: block; font-size: 1.5rem; font-weight: bold; margin-top: 5px; }
+        .score-player1 { color: #29b6f6; }
+        .score-player2 { color: #ffee58; }
+        .score-draws { color: #bdc3c7; }
+
+        .chat-area { margin: 20px auto 0 auto; width: 100%; max-width: 500px; background-color: #1c2a3s; border-radius: 10px; padding: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.4); }
+        .chat-title { font-size: 1.1rem; font-weight: bold; color: #bdc3c7; margin-bottom: 10px; text-align: center; }
+        .chat-messages { height: 130px; overflow-y: auto; border: 1px solid #34495e; border-radius: 8px; padding: 10px; background-color: #0b1120; }
+        .chat-message { margin-bottom: 8px; padding: 6px 10px; border-radius: 6px; font-size: 0.9rem; line-height: 1.5; }
+        .chat-message.ai { color: #ffee58; background-color: rgba(52, 73, 94, 0.7); text-align: right; }
+        .chat-message.system { color: #9b59b6; background-color: rgba(44, 62, 80, 0.7); font-style: italic; } /* Amethyst Purple */
+        .chat-message.player-info { color: #1abc9c; background-color: rgba(11, 17, 32, 0.7); text-align: left; } /* Turquoise */
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; }
+        .modal-content { background-color: #1c2a3s; padding: 30px; border: 1px solid #34495e; border-radius: 12px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.6); animation: fadeInModal 0.4s ease-out; }
+        @keyframes fadeInModal { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .modal-title { font-size: 2rem; margin-bottom: 15px; }
+        .modal-message { font-size: 1.1rem; color: #ecf0f1; margin-bottom: 25px; }
     </style>
 </head>
-<body class="antialiased">
+<body>
+    <div class="container-wrapper">
+        <div class="container">
+            <h1 class="text-4xl font-bold text-center mb-6 text-sky-400">دوز اعماق فضا</h1>
 
-    <div id="coinDisplay" class="coin-display hidden">
-        <i class="fas fa-coins"></i>
-        <span id="coinBalance">--</span>
-        <span>سکه</span>
-    </div>
-    <div id="userIdDisplay" class="user-id-display hidden" title="شناسه کاربری شما">شناسه: <span id="userIdText"></span></div>
-    <div id="themeToggle" class="theme-toggle" title="تغییر تم روشن/تاریک">
-        <i class="fas fa-moon"></i>
-    </div>
-    <div id="toastNotification" class="toast-notification">
-        <i id="toastIcon" class="fas"></i>
-        <span id="toastMessage"></span>
-    </div>
-
-    <div class="main-container">
-        <div class="flex justify-center items-center mb-2">
-             <i class="fas fa-brain title-icon mr-3 text-pink-500"></i> <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-purple-500 to-pink-500">
-                آفرینشگر تصویر V3
-            </h1>
-        </div>
-        <p class="mb-4 text-xs sm:text-sm md:text-base text-gray-500 html.dark:text-gray-400">نسل جدید خلق هنر با هوش مصنوعی، سریع‌تر، هوشمندتر و پایدارتر.</p>
-
-        <div class="tabs">
-            <button class="tab-button active" data-tab="createTab" aria-label="بخش خلق اثر" title="بخش اصلی برای تولید تصاویر جدید"><i class="fas fa-magic mr-2"></i>خلق اثر<span class="tab-loading-indicator"></span></button>
-            <button class="tab-button" data-tab="historyTab" aria-label="بخش تاریخچه" title="مشاهده و مدیریت تصاویر قبلی"><i class="fas fa-scroll mr-2"></i>تاریخچه<span class="tab-loading-indicator"></span></button>
-            <button class="tab-button" data-tab="favoritesTab" aria-label="بخش برگزیده‌ها" title="دسترسی به تصاویر مورد علاقه"><i class="fas fa-star mr-2"></i>برگزیده‌ها<span class="tab-loading-indicator"></span></button>
-            <button class="tab-button" data-tab="achievementsTab" aria-label="بخش دستاوردها" title="مشاهده دستاوردها و جوایز کسب شده"><i class="fas fa-trophy mr-2"></i>دستاوردها<span class="tab-loading-indicator"></span></button>
-            <button class="tab-button" data-tab="settingsTab" aria-label="بخش تنظیمات" title="تنظیمات برنامه، آمار و راهنما"><i class="fas fa-cog mr-2"></i>تنظیمات<span class="tab-loading-indicator"></span></button>
-        </div>
-
-        <div id="createTab" class="tab-content active">
-            <div class="input-options-grid">
-                <div>
-                    <label for="stylePresetSelect" class="block text-sm font-medium text-gray-700 html.dark:text-gray-300 mb-1 text-right">انتخاب سبک هنری:</label>
-                    <select id="stylePresetSelect" class="style-preset-select w-full" title="یک سبک هنری برای تصویر خود انتخاب کنید">
-                        </select>
-                    <p id="recentlyUsedStylesLabel" class="recently-used-styles-label hidden">اخیراً استفاده شده:</p>
-                </div>
-                <div>
-                    <label for="aspectRatioSelect" class="block text-sm font-medium text-gray-700 html.dark:text-gray-300 mb-1 text-right">راهنمای نسبت تصویر:</label>
-                    <select id="aspectRatioSelect" class="aspect-ratio-select w-full" title="برای کنترل کادربندی، این عبارت را به انتهای پرامپت اصلی خود اضافه کنید">
-                        <option value="">پیش‌فرض (معمولا مربعی 1:1)</option>
-                        <option value=", 16:9 aspect ratio">عریض (16:9) - مناسب برای والپیپر دسکتاپ</option>
-                        <option value=", 9:16 aspect ratio">عمودی (9:16) - مناسب برای استوری موبایل</option>
-                        <option value=", 1:1 aspect ratio">مربعی (1:1) - کلاسیک و متعادل</option>
-                        <option value=", 4:3 aspect ratio">کلاسیک (4:3) - استاندارد قدیمی تلویزیون</option>
-                        <option value=", 3:2 aspect ratio">عکاسی (3:2) - رایج در دوربین‌ها</option>
-                        <option value=", 21:9 aspect ratio">سینمایی (21:9) - بسیار عریض</option>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="gameMode">حالت بازی:</label>
+                    <select id="gameMode">
+                        <option value="pvai">بازیکن مقابل هوش مصنوعی</option>
+                        <option value="pvp">بازیکن مقابل بازیکن</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="textarea-wrapper">
-                <textarea id="promptInput"
-                          class="w-full p-3 sm:p-4 text-sm sm:text-base"
-                          placeholder="مثال: یک گربه سیاه پشمالو با چشمان سبز درخشان، زیر نور ماه کامل نشسته و به دوردست خیره شده است."
-                          title="ایده اصلی تصویر خود را با جزئیات توصیف کنید"></textarea>
-                <span id="promptCharCounter" class="char-counter">0/500</span>
-            </div>
-            <p class="prompt-tip">نکته: برای نتایج بهتر (مخصوصاً در فارسی)، پرامپت خود را با جزئیات کامل و واضح بنویسید.</p>
-
-            <div class="textarea-wrapper mt-3">
-                <textarea id="negativePromptInput"
-                          class="w-full p-3 sm:p-4 text-sm sm:text-base"
-                          placeholder="چه چیزهایی را در تصویر نمی‌خواهید؟ (مثال: تار، کیفیت پایین، دست‌های اضافی، متن، امضا)"
-                          title="مواردی که نمی‌خواهید در تصویر باشند را مشخص کنید"></textarea>
-                <span id="negativePromptCharCounter" class="char-counter">0/300</span>
-            </div>
-
-            <div class="flex flex-col sm:flex-row justify-between items-center mt-4 gap-3">
-                <button id="surpriseMeButton" class="w-full sm:w-auto btn btn-outline btn-sm" title="یک ایده پرامپت تصادفی دریافت کنید">
-                    <i class="fas fa-dice"></i>
-                    <span>ایده بده!</span>
-                </button>
-                <button id="generateButton" class="w-full sm:w-auto btn btn-primary text-base sm:text-lg" title="تصویر خود را با هوش مصنوعی خلق کنید">
-                    <i class="fas fa-wand-magic-sparkles"></i>
-                    <span id="generateButtonText">خلق کن! (۵ سکه)</span>
-                </button>
-            </div>
-            <div id="cooldownTimerDisplay" class="mt-2 text-sm text-amber-600 html.dark:text-amber-400 font-medium hidden"></div>
-
-
-            <div id="generateErrorMessage" class="message-box error-message hidden mt-3"><i class="fas fa-exclamation-circle"></i><span id="generateErrorText"></span></div>
-            <div id="loadingIndicatorContainer" class="loader-container">
-                <div id="loadingIndicator" class="loader"></div>
-                <div id="generationProgressBarContainer"><div id="generationProgressBar"></div></div>
-                <p id="loadingStatusText"></p>
-            </div>
-
-            <div class="generated-image-wrapper">
-                <div class="generated-image-container" id="imageDisplayArea">
-                    <p id="placeholderText" class="placeholder-text"><i class="fas fa-image text-4xl mb-2"></i>اثر هنری شما اینجا ظاهر خواهد شد...</p>
-                    <img id="generatedImage" src="#" alt="تصویر تولید شده" class="generated-image">
+                <div class="control-group">
+                    <label for="difficulty">سطح سختی (هوش مصنوعی):</label>
+                    <select id="difficulty">
+                        <option value="easy">آسان</option>
+                        <option value="medium">متوسط</option>
+                        <option value="hard">سخت (Minimax)</option>
+                    </select>
                 </div>
-                <div id="actionButtonsContainer" class="action-buttons">
-                    <button id="downloadButton" class="btn btn-secondary hidden" aria-label="دانلود تصویر" title="دانلود تصویر تولید شده"><i class="fas fa-download"></i><span>دانلود</span></button>
-                    <button id="favoriteButton" class="btn btn-secondary hidden" aria-label="افزودن به برگزیده‌ها" title="افزودن یا حذف از برگزیده‌ها"><i class="far fa-star"></i><span id="favoriteButtonText">برگزیدن</span></button>
-                    <button id="copyPromptButton" class="btn btn-secondary hidden" aria-label="کپی پرامپت" title="کپی پرامپت کامل استفاده شده برای این تصویر"><i class="fas fa-paste"></i><span>کپی پرامپت</span></button>
+                <div class="control-group">
+                    <label for="player1Symbol">نماد شما (بازیکن ۱):</label>
+                    <select id="player1Symbol">
+                        <option value="X">X</option>
+                        <option value="O">O</option>
+                    </select>
                 </div>
-            </div>
-        </div>
-
-        <div id="historyTab" class="tab-content">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xl font-semibold">تاریخچه آفرینش‌ها</h2>
-                <button id="clearPromptHistoryButton" class="btn btn-danger btn-sm" title="پاک کردن تمام موارد از تاریخچه"><i class="fas fa-trash-alt mr-1"></i>پاک کردن همه</button>
-            </div>
-            <div id="promptHistoryList" class="list-container"></div>
-            <p id="emptyHistoryText" class="empty-state hidden"><i class="fas fa-history"></i>تاریخچه‌ای برای نمایش وجود ندارد. اولین اثر خود را خلق کنید!</p>
-        </div>
-
-        <div id="favoritesTab" class="tab-content">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xl font-semibold">برگزیده‌های شما</h2>
-                <button id="clearFavoritesButton" class="btn btn-danger btn-sm" title="پاک کردن تمام تصاویر از برگزیده‌ها"><i class="fas fa-trash-alt mr-1"></i>پاک کردن همه</button>
-            </div>
-            <div id="favoriteImageList" class="list-container"></div>
-            <p id="emptyFavoritesText" class="empty-state hidden"><i class="fas fa-star-half-alt"></i>هنوز تصویری را به برگزیده‌ها اضافه نکرده‌اید.</p>
-        </div>
-
-        <div id="achievementsTab" class="tab-content">
-            <h2 class="text-xl font-semibold mb-3">دستاوردها و جوایز</h2>
-            <div id="achievementsList" class="achievement-grid"></div>
-             <p id="emptyAchievementsText" class="empty-state hidden"><i class="fas fa-medal"></i>هنوز دستاوردی کسب نکرده‌اید. به خلق ادامه دهید!</p>
-        </div>
-
-        <div id="settingsTab" class="tab-content">
-            <h2 class="text-xl font-semibold mb-4">تنظیمات و اطلاعات</h2>
-
-            <div class="settings-section">
-                <h3><i class="fas fa-chart-pie mr-2"></i>آمار کاربری</h3>
-                <div id="userStatsContainer">
-                    <div class="stat-item"><span class="stat-label">تصاویر خلق شده:</span><span id="statImagesGenerated" class="stat-value">--</span></div>
-                    <div class="stat-item"><span class="stat-label">دستاوردها:</span><span id="statAchievementsUnlocked" class="stat-value">--</span></div>
-                    <div class="stat-item"><span class="stat-label">پرامپت‌ها در تاریخچه:</span><span id="statHistoryCount" class="stat-value">--</span></div>
-                    <div class="stat-item"><span class="stat-label">تصاویر برگزیده:</span><span id="statFavoritesCount" class="stat-value">--</span></div>
-                    <div class="stat-item"><span class="stat-label">عضویت از:</span><span id="statMemberSince" class="stat-value">--</span></div>
+                <div class="control-group">
+                    <label>کنترل صدا:</label>
+                    <div class="flex gap-2">
+                        <button id="soundToggle" class="flex-1">🔊 افکت: روشن</button>
+                        <button id="musicToggle" class="music-button flex-1">🎵 موسیقی: خاموش</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="musicVolume">ولوم موسیقی:</label>
+                    <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.1">
+                </div>
+                 <div class="control-group">
+                    <label>&nbsp;</label> <button id="hintButton" class="tertiary-button">💡 راهنمایی</button>
+                </div>
+                <div class="control-group col-span-full md:col-span-1">
+                     <label>&nbsp;</label> <button id="resetButton" class="secondary-button font-bold py-2 px-4 w-full">
+                        شروع مجدد بازی
+                    </button>
                 </div>
             </div>
 
-            <div id="dailyBonusSection" class="settings-section">
-                <h3><i class="fas fa-gift mr-2"></i>جایزه روزانه</h3>
-                <p id="dailyBonusMessage">وضعیت جایزه روزانه شما...</p>
-                <button id="dailyBonusButton" class="btn btn-success" disabled title="دریافت جایزه روزانه سکه"><i class="fas fa-calendar-check mr-1"></i><span id="dailyBonusButtonText">دریافت جایزه</span></button>
+            <div class="scoreboard">
+                <div class="score-item"><span id="player1NameScore">بازیکن ۱ (X)</span><span id="player1Score" class="score-player1">0</span></div>
+                <div class="score-item">مساوی<span id="drawScore" class="score-draws">0</span></div>
+                <div class="score-item"><span id="player2NameScore">هوش مصنوعی (O)</span><span id="player2Score" class="score-player2">0</span></div>
             </div>
 
-            <div class="settings-section">
-                <h3><i class="fas fa-question-circle mr-2"></i>راهنما و پرسش‌های متداول</h3>
-                <div id="faqContainer">
-                    <div class="faq-item">
-                        <div class="faq-question">چگونه بهترین نتیجه را بگیرم؟ <i class="fas fa-chevron-down"></i></div>
-                        <div class="faq-answer">از توصیفات دقیق و واضح استفاده کنید. سبک هنری و نسبت تصویر را مشخص کنید. از پرامپت منفی برای حذف موارد ناخواسته بهره ببرید. برای مثال، اگر نمی‌خواهید تصویر تار باشد، "تار" یا "blurry" را در پرامپت منفی بنویسید.</div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question">هزینه هر تصویر چقدر است؟ <i class="fas fa-chevron-down"></i></div>
-                        <div class="faq-answer">هر تصویر <span id="faqImageCost">5</span> سکه هزینه دارد. می‌توانید با جایزه روزانه و کسب دستاوردها سکه رایگان دریافت کنید.</div>
-                    </div>
-                     <div class="faq-item">
-                        <div class="faq-question">چطور تم را عوض کنم؟ <i class="fas fa-chevron-down"></i></div>
-                        <div class="faq-answer">روی آیکون ماه/خورشید در بالا سمت چپ صفحه کلیک کنید تا بین تم روشن و تاریک جابجا شوید.</div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question">اگر با خطا مواجه شدم چه کنم؟ <i class="fas fa-chevron-down"></i></div>
-                        <div class="faq-answer">ابتدا از اتصال اینترنت خود مطمئن شوید. اگر خطای مربوط به سرور تصویرساز (مانند 401 یا 500) دریافت کردید، کمی صبر کنید و دوباره تلاش کنید. گاهی اوقات سرورها موقتا شلوغ هستند. رفرش کردن صفحه نیز می‌تواند کمک کننده باشد.</div>
-                    </div>
+            <div class="status-bar">
+                <p id="statusText" class="status-text">نوبت شما (X)</p>
+            </div>
+
+            <div class="board-outer-container">
+                <div class="board-container">
+                    <div class="board" id="board"></div>
+                    <canvas id="winningLineCanvas" class="winning-line-canvas"></canvas>
                 </div>
             </div>
 
-             <div class="settings-section">
-                <h3><i class="fas fa-cogs mr-2"></i>عملیات حساب کاربری</h3>
-                 <div class="flex flex-col sm:flex-row gap-3 mt-2">
-                    <button id="showHelpButton" class="btn btn-info w-full sm:w-auto" title="نمایش راهنمای کامل استفاده از برنامه"><i class="fas fa-info-circle mr-1"></i>نمایش راهنمای کامل</button>
-                 </div>
-            </div>
-        </div>
 
-
-        <p class="app-footer mt-6">
-            نسخه 3.0 | ایمن‌سازی شده با <i class="fas fa-user-shield text-blue-400"></i> و قدرت گرفته از مدل <a href="https://deepmind.google/technologies/imagen/" target="_blank" rel="noopener noreferrer" title="اطلاعات بیشتر درباره مدل Imagen گوگل">Imagen</a> گوگل
-        </p>
-    </div>
-
-    <div id="imageModal" class="modal">
-        <div class="modal-content-wrapper">
-            <div class="modal-content">
-                <span class="close-modal" id="closeImageModal" aria-label="بستن مودال تصویر" title="بستن پنجره بزرگنمایی تصویر">&times;</span>
-                <img id="modalImageSrc" src="#" alt="تصویر بزرگ شده">
+            <div class="chat-area" id="chatArea">
+                <div class="chat-title">پیام‌رسان بین ستاره‌ای</div>
+                <div class="chat-messages" id="chatMessages"></div>
             </div>
         </div>
     </div>
 
-    <div id="helpModal" class="modal">
-        <div class="modal-content-wrapper">
-            <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-                <span class="close-modal" id="closeHelpModal" aria-label="بستن مودال راهنما" title="بستن پنجره راهنما">&times;</span>
-                <h2 class="text-xl font-bold mb-4 text-center">راهنمای جامع آفرینشگر تصویر V3</h2>
-                <p class="mb-2">به نسخه جدید و بهبود یافته خوش آمدید! در اینجا چند نکته برای استفاده بهتر آورده شده است:</p>
-                <ul class="list-disc list-inside mb-3 text-right space-y-1">
-                    <li><strong>پرامپت اصلی:</strong> ایده اصلی تصویر خود را با جزئیات توصیف کنید. هرچه دقیق‌تر، نتیجه بهتر!</li>
-                    <li><strong>پرامپت منفی:</strong> مواردی که نمی‌خواهید در تصویر باشند را مشخص کنید (مثل رنگ‌ها، اشیاء، یا ویژگی‌های خاص).</li>
-                    <li><strong>سبک هنری:</strong> از لیست، سبک مورد علاقه خود را انتخاب کنید. می‌توانید سبک‌های اخیر استفاده شده را نیز سریعا انتخاب کنید.</li>
-                    <li><strong>نسبت تصویر:</strong> برای کنترل کادربندی، عبارت مربوط به نسبت تصویر را از لیست انتخاب کنید تا به انتهای پرامپت شما اضافه شود.</li>
-                    <li><strong>ایده بده!:</strong> اگر ایده‌ای ندارید، از این دکمه برای دریافت یک پرامپت تصادفی (گاهی همراه با سبک یا پرامپت منفی) استفاده کنید.</li>
-                    <li><strong>سکه:</strong> برای خلق هر تصویر سکه مصرف می‌شود. از طریق جایزه روزانه و دستاوردها سکه کسب کنید.</li>
-                    <li><strong>تاریخچه و برگزیده‌ها:</strong> آثار قبلی خود را مشاهده، مجددا استفاده، یا مدیریت کنید.</li>
-                    <li><strong>دستاوردها:</strong> با فعالیت در برنامه، دستاوردهای مختلف کسب کرده و جایزه بگیرید!</li>
-                    <li><strong>تأخیر پس از تولید:</strong> برای جلوگیری از فشار به سرور و خطاهای احتمالی، پس از هر بار تولید تصویر، باید چند ثانیه صبر کنید.</li>
-                </ul>
-
-                <h3 class="text-lg font-semibold mt-4 mb-2 text-primary-color border-b-2 border-primary-color pb-1">نکات مهم برای نوشتن پرامپت بهتر (مخصوصاً در فارسی):</h3>
-                <ul class="list-disc list-inside mb-3 text-right space-y-1 text-sm">
-                    <li><strong>دقیق و با جزئیات باشید:</strong> به جای "گل زیبا"، بنویسید "یک گل رز قرمز مخملی با قطرات شبنم روی گلبرگ‌ها، در نور ملایم صبحگاهی".</li>
-                    <li><strong>موضوع اصلی را مشخص کنید:</strong> ابتدا مهم‌ترین عنصر تصویر را ذکر کنید.</li>
-                    <li><strong>از صفت‌ها به خوبی استفاده کنید:</strong> رنگ، اندازه، جنس، حالت و احساسات را توصیف کنید.</li>
-                    <li><strong>محیط و پس‌زمینه را توصیف کنید:</strong> تصویر در کجا اتفاق می‌افتد؟ چه چیزهایی در پس‌زمینه قرار دارند؟</li>
-                    <li><strong>نورپردازی و زاویه دید:</strong> اگر برایتان مهم است، نوع نور (مثلاً "نور طبیعی روز"، "نور نئون"، "سایه روشن") و زاویه دید (مثلاً "نمای نزدیک"، "نمای از بالا") را مشخص کنید.</li>
-                    <li><strong>کلمات کلیدی مهم:</strong> گاهی اوقات افزودن کلماتی مانند "باکیفیت بالا"، "هنر دیجیتال"، "واقع‌گرایانه" (حتی اگر سبک را انتخاب کرده‌اید) می‌تواند به بهبود نتیجه کمک کند.</li>
-                    <li><strong>برای فارسی، ساده و روان بنویسید:</strong> از اصطلاحات خیلی پیچیده یا عامیانه که ممکن است مدل به خوبی درک نکند، پرهیز کنید.</li>
-                    <li><strong>آزمایش کنید:</strong> اگر نتیجه اولیه مطلوب نبود، پرامپت خود را با کلمات و ترتیب متفاوت دوباره امتحان کنید.</li>
-                </ul>
-
-                <p class="text-sm text-gray-600 html.dark:text-gray-400 mt-3">امنیت شما برای ما مهم است. تمامی ورودی‌ها بررسی می‌شوند و از داده‌های شما محافظت می‌شود.</p>
-                <div class="text-center mt-5">
-                    <button id="gotItHelpButton" class="btn btn-primary">فهمیدم!</button>
-                </div>
-            </div>
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle" class="modal-title"></h2>
+            <p id="modalMessage" class="text-lg"></p>
+            <button id="modalRestartButton" class="primary-button modal-button font-bold py-3 px-6 text-lg">بازی دوباره</button>
         </div>
     </div>
 
-    <div id="confirmationModal" class="modal">
-        <div class="modal-content-wrapper">
-            <div class="modal-content confirmation-modal-content">
-                <h3 id="confirmationTitle">آیا مطمئن هستید؟</h3>
-                <p id="confirmationMessage">این عملیات غیرقابل بازگشت است.</p>
-                <div class="confirmation-buttons">
-                    <button id="confirmActionButton" class="btn btn-danger">تایید</button>
-                    <button id="cancelActionButton" class="btn btn-secondary">انصراف</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <script type="module">
-        // Firebase SDK imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, updateDoc, collection, addDoc, query, getDocs, deleteDoc, orderBy, limit, writeBatch, where, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- Global Config & Variables ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'image-gen-ultra-secure-v3'; // App ID updated for V3
-        let app, auth, db, userId = null;
-
-        const INITIAL_COINS = 35; // Slightly more initial coins
-        const IMAGE_COST = 5;
-        const DAILY_BONUS_AMOUNT = 12; // Slightly more daily bonus
-        const MAX_FAVORITES = 30;
-        const MAX_HISTORY = 60;
-        const MAX_PROMPT_LENGTH = 500;
-        const MAX_NEGATIVE_PROMPT_LENGTH = 300;
-        const GENERATE_COOLDOWN_SECONDS = 8; // Cooldown period in seconds
-
-        const ACHIEVEMENT_CONFIG = { /* ... same as V2 ... */
-            FIRST_IMAGE: { id: 'FIRST_IMAGE', name: 'اولین آفرینش!', description: 'اولین تصویر خود را با موفقیت خلق کردید.', icon: 'fa-palette', reward: 5 },
-            TEN_IMAGES: { id: 'TEN_IMAGES', name: 'هنرمند نوظهور', description: '۱۰ تصویر خلق کردید.', icon: 'fa-paint-brush', reward: 10 },
-            FIFTY_IMAGES: { id: 'FIFTY_IMAGES', name: 'استاد آفرینشگر', description: '۵۰ تصویر خلق کردید.', icon: 'fa-dragon', reward: 25 },
-            FIRST_FAVORITE: { id: 'FIRST_FAVORITE', name: 'اولین برگزیده', description: 'اولین تصویر را به برگزیده‌ها اضافه کردید.', icon: 'fa-star', reward: 3 },
-            TEN_FAVORITES: { id: 'TEN_FAVORITES', name: 'کلکسیونر', description: '۱۰ تصویر را برگزیده کردید.', icon: 'fa-layer-group', reward: 7 },
-            USED_NEGATIVE_PROMPT: { id: 'USED_NEGATIVE_PROMPT', name: 'استاد حذف', description: 'اولین بار از پرامپت منفی استفاده کردید.', icon: 'fa-filter-circle-xmark', reward: 5 },
-            USED_STYLE_PRESET: { id: 'USED_STYLE_PRESET', name: 'استایلیست', description: 'اولین بار از یک سبک هنری استفاده کردید.', icon: 'fa-swatchbook', reward: 3 },
-            FIVE_STYLES_USED: { id: 'FIVE_STYLES_USED', name: 'طراح چند سبکی', description: 'از ۵ سبک هنری مختلف استفاده کردید.', icon: 'fa-wand-magic-sparkles', reward: 10 },
-            DAILY_BONUS_CLAIMED_3_TIMES: {id: 'DAILY_BONUS_CLAIMED_3_TIMES', name: 'بازدیدکننده دائمی', description: '۳ بار جایزه روزانه دریافت کردید.', icon: 'fa-calendar-check', reward: 10},
-        };
-        let usedStylesSet = new Set();
-        let recentlyUsedStyles = []; // Array to store recently used style values
-
+    <script>
         // DOM Elements
-        const promptInput = document.getElementById('promptInput');
-        const negativePromptInput = document.getElementById('negativePromptInput');
-        const promptCharCounter = document.getElementById('promptCharCounter');
-        const negativePromptCharCounter = document.getElementById('negativePromptCharCounter');
-        const generateButton = document.getElementById('generateButton');
-        const generateButtonTextEl = document.getElementById('generateButtonText');
-        const cooldownTimerDisplay = document.getElementById('cooldownTimerDisplay');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const loadingStatusText = document.getElementById('loadingStatusText');
-        const generationProgressBarContainer = document.getElementById('generationProgressBarContainer');
-        const generationProgressBar = document.getElementById('generationProgressBar');
-        const generatedImage = document.getElementById('generatedImage');
-        const placeholderText = document.getElementById('placeholderText');
-        const generateErrorMessage = document.getElementById('generateErrorMessage');
-        const generateErrorText = document.getElementById('generateErrorText');
-        const downloadButton = document.getElementById('downloadButton');
-        const favoriteButton = document.getElementById('favoriteButton');
-        const favoriteButtonText = document.getElementById('favoriteButtonText');
-        const copyPromptButton = document.getElementById('copyPromptButton');
-        const actionButtonsContainer = document.getElementById('actionButtonsContainer');
-        const coinDisplayElement = document.getElementById('coinDisplay');
-        const coinBalanceElement = document.getElementById('coinBalance');
-        const userIdDisplayElement = document.getElementById('userIdDisplay');
-        const userIdTextElement = document.getElementById('userIdText');
-        const toastNotification = document.getElementById('toastNotification');
-        const toastIcon = document.getElementById('toastIcon');
-        const toastMessage = document.getElementById('toastMessage');
-        const imageModal = document.getElementById('imageModal');
-        const modalImageSrc = document.getElementById('modalImageSrc');
-        const closeImageModal = document.getElementById('closeImageModal');
-        const helpModal = document.getElementById('helpModal');
-        const closeHelpModal = document.getElementById('closeHelpModal');
-        const showHelpButton = document.getElementById('showHelpButton');
-        const gotItHelpButton = document.getElementById('gotItHelpButton');
-        const themeToggle = document.getElementById('themeToggle');
-        const stylePresetSelect = document.getElementById('stylePresetSelect');
-        const recentlyUsedStylesLabel = document.getElementById('recentlyUsedStylesLabel');
-        const aspectRatioSelect = document.getElementById('aspectRatioSelect');
-        const surpriseMeButton = document.getElementById('surpriseMeButton');
-        const promptHistoryList = document.getElementById('promptHistoryList');
-        const emptyHistoryText = document.getElementById('emptyHistoryText');
-        const favoriteImageList = document.getElementById('favoriteImageList');
-        const emptyFavoritesText = document.getElementById('emptyFavoritesText');
-        const dailyBonusButton = document.getElementById('dailyBonusButton');
-        const dailyBonusButtonText = document.getElementById('dailyBonusButtonText');
-        const dailyBonusMessage = document.getElementById('dailyBonusMessage');
-        // const dailyBonusSection = document.getElementById('dailyBonusSection'); // Already defined in V2
-        const achievementsList = document.getElementById('achievementsList');
-        const emptyAchievementsText = document.getElementById('emptyAchievementsText');
-        const clearPromptHistoryButton = document.getElementById('clearPromptHistoryButton');
-        const clearFavoritesButton = document.getElementById('clearFavoritesButton');
-        const faqContainer = document.getElementById('faqContainer');
-        const faqImageCost = document.getElementById('faqImageCost');
-        const confirmationModal = document.getElementById('confirmationModal');
-        const confirmationTitle = document.getElementById('confirmationTitle');
-        const confirmationMessage = document.getElementById('confirmationMessage');
-        const confirmActionButton = document.getElementById('confirmActionButton');
-        const cancelActionButton = document.getElementById('cancelActionButton');
-        const statImagesGenerated = document.getElementById('statImagesGenerated');
-        const statAchievementsUnlocked = document.getElementById('statAchievementsUnlocked');
-        const statHistoryCount = document.getElementById('statHistoryCount');
-        const statFavoritesCount = document.getElementById('statFavoritesCount');
-        const statMemberSince = document.getElementById('statMemberSince');
+        const boardElement = document.getElementById('board');
+        const statusTextElement = document.getElementById('statusText');
+        const resetButton = document.getElementById('resetButton');
+        const difficultySelect = document.getElementById('difficulty');
+        const gameModeSelect = document.getElementById('gameMode');
+        const player1SymbolSelect = document.getElementById('player1Symbol');
+        const chatMessagesElement = document.getElementById('chatMessages');
+        const chatAreaElement = document.getElementById('chatArea');
+        const soundToggleButton = document.getElementById('soundToggle');
+        const musicToggleButton = document.getElementById('musicToggle');
+        const musicVolumeSlider = document.getElementById('musicVolume');
+        const hintButton = document.getElementById('hintButton');
 
+        const player1ScoreElement = document.getElementById('player1Score');
+        const player2ScoreElement = document.getElementById('player2Score');
+        const drawScoreElement = document.getElementById('drawScore');
+        const player1NameScoreElement = document.getElementById('player1NameScore');
+        const player2NameScoreElement = document.getElementById('player2NameScore');
+        
+        const winningLineCanvas = document.getElementById('winningLineCanvas');
+        const ctx = winningLineCanvas.getContext('2d');
 
-        const globalApiKey = ""; // Injected by Canvas environment - DO NOT CHANGE THIS LINE
-        // const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${globalApiKey}`; // Defined inside function now
+        const gameOverModal = document.getElementById('gameOverModal');
+        const modalTitleElement = document.getElementById('modalTitle');
+        const modalMessageElement = document.getElementById('modalMessage');
+        const modalRestartButton = document.getElementById('modalRestartButton');
 
-        let currentImageDataBase64 = null;
-        let currentPromptForFavorite = "";
-        let currentFullPromptForCopy = "";
-        let currentImageIsFavorite = false;
-        let userAchievements = {};
-        let userStats = { imagesGenerated: 0, achievementsUnlocked: 0, historyCount: 0, favoritesCount: 0, memberSince: null, dailyBonusClaims: 0, usedStyles: [], recentlyUsedStyles: [] };
-        let generateCooldownInterval = null;
-        let isGenerating = false; // Flag to prevent multiple simultaneous generations
+        // Game State
+        let boardState = Array(9).fill('');
+        let currentPlayer;
+        let gameActive = true;
+        let currentDifficulty = 'easy';
+        let currentGameMode = 'pvai';
+        let player1Symbol = 'X';
+        let player2Symbol = 'O'; // AI or Player 2
+        let scores = { player1: 0, player2: 0, draws: 0 };
+        let soundEffectsEnabled = true;
+        let musicEnabled = false;
+        let hintCellIndex = -1;
 
-        const randomLoadingTexts = [
-            "در حال ترکیب رنگ‌ها...", "پیکسل‌ها در حال رقصیدن...", "جادوی هوش مصنوعی در جریان است...",
-            "خلق یک شاهکار جدید...", "صبر کنید، تقریبا آماده است...", "در حال تنظیم دقیق جزئیات...",
-            "اتصال به شبکه عصبی...", "پردازش درخواست شما..."
-        ];
-        const baseStylePresets = [
-            { value: "", text: "بدون سبک خاص" },
-            { value: "cinematic photography", text: "عکاسی سینمایی" },
-            { value: "photorealistic", text: "واقع‌گرایانه" },
-            { value: "epic digital art", text: "هنر دیجیتال حماسی" },
-            { value: "pixel art sprite", text: "اسپرایت هنر پیکسلی" },
-            { value: "watercolor painting", text: "نقاشی آبرنگ" },
-            { value: "fantasy concept art", text: "کانسپت آرت فانتزی" },
-            { value: "anime style", text: "سبک انیمه" },
-            { value: "3d render", text: "رندر سه بعدی" },
-            { value: "impressionist painting", text: "نقاشی امپرسیونیستی" },
-            { value: "cyberpunk art", text: "هنر سایبرپانک" },
-            { value: "steampunk", text: "استیم‌پانک" },
-            { value: "low poly", text: "پلی‌گان پایین (Low Poly)" },
-            { value: "oil painting", text: "نقاشی رنگ روغن" },
-            { value: "charcoal sketch", text: "طراحی ذغالی" }
+        // Winning Combinations - Moved to a globally accessible scope
+        const winningCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+            [0, 4, 8], [2, 4, 6]             // diagonals
         ];
 
+        // --- Sound & Music Setup (Tone.js) ---
+        const moveSound = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.05, release: 0.1 } }).toDestination();
+        const winSound = new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.5 } }).toDestination();
+        const loseSound = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.3 } }).toDestination();
+        const drawSound = new Tone.Synth({ oscillator: { type: "square" }, envelope: { attack: 0.02, decay: 0.15, sustain: 0.05, release: 0.2 } }).toDestination();
+        const clickSound = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0 } }).toDestination();
+        const hintSound = new Tone.Synth({ oscillator: { type: "pulse", width: 0.3 }, envelope: { attack: 0.01, decay: 0.05, sustain: 0.02, release: 0.1 } }).toDestination();
 
-        // --- Security: Input Sanitization ---
-        function sanitizeInput(inputString, maxLength = Infinity) {
-            if (typeof inputString !== 'string') return '';
-            let sanitized = inputString.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-            sanitized = sanitized.replace(/<\/?[^>]+(>|$)/gi, '');
-            sanitized = sanitized.trim();
-            return sanitized.substring(0, maxLength);
-        }
+        const musicVolume = new Tone.Volume(-25).toDestination(); // Start with a lower volume for "dark" music
+        musicVolumeSlider.value = Tone.dbToGain(musicVolume.volume.value);
 
-        // --- Theme Management ---
-        function applyTheme(theme) { /* ... same as V2 ... */
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            } else {
-                document.documentElement.classList.remove('dark');
-                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-            }
-        }
-        function initTheme() { /* ... same as V2 ... */
-            const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            applyTheme(savedTheme);
-        }
-        themeToggle.addEventListener('click', () => { /* ... same as V2 ... */
-            const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            applyTheme(newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
+        // Attempt at a "darker" ambient music piece
+        const backgroundMusic = new Tone.Loop(time => {
+            const synth = new Tone.PolySynth(Tone.AMSynth, { // AMSynth for potentially darker/metallic tones
+                harmonicity: 1.5,
+                detune: 0,
+                oscillator: { type: "sawtooth" },
+                envelope: { attack: 0.2, decay: 0.5, sustain: 0.3, release: 1.2 },
+                modulation: { type: "sine" },
+                modulationEnvelope: { attack: 0.3, decay: 0.1, sustain: 0.8, release: 0.8 }
+            }).connect(musicVolume);
 
+            // Darker, minor key progression (e.g., A minor based)
+            const chords = [
+                ["A2", "C3", "E3"], // Am
+                ["F2", "A2", "C3"], // F
+                ["C2", "E2", "G2"], // C (can sound major, but in context of Am)
+                ["G2", "B2", "D3"]  // G
+            ];
+            const randomChord = chords[Math.floor(Math.random() * chords.length)];
+            
+            synth.triggerAttackRelease(randomChord, "2m", time); // Hold chords longer
 
-        // --- Utility Functions (Toast, Error Display, Confirmation Modal) ---
-        function showToast(message, type = 'info', duration = 3500) { /* ... same as V2 ... */
-            toastMessage.textContent = message;
-            toastNotification.className = 'toast-notification'; // Reset classes
-            toastNotification.classList.add(type);
-            toastIcon.className = 'fas'; // Reset icon
-            if (type === 'success') toastIcon.classList.add('fa-check-circle');
-            else if (type === 'error') toastIcon.classList.add('fa-times-circle');
-            else if (type === 'warning') toastIcon.classList.add('fa-exclamation-triangle');
-            else toastIcon.classList.add('fa-info-circle');
+            // Add a very low, slow bass note
+            const bassSynth = new Tone.Synth({
+                oscillator: {type: "triangle8"},
+                envelope: {attack: 0.5, decay:1, sustain:0.5, release:1}
+            }).connect(musicVolume);
+            bassSynth.triggerAttackRelease(randomChord[0].replace('2','1').replace('3','1'), "1m", time + 0.1); // Octave down
 
-            toastNotification.style.display = 'flex';
-            setTimeout(() => {
-                toastNotification.style.display = 'none';
-            }, duration);
-        }
-        function displayGenError(message) { /* ... same as V2 ... */
-            generateErrorText.textContent = message;
-            generateErrorMessage.classList.remove('hidden');
-        }
-        function clearGenError() { /* ... same as V2 ... */
-            generateErrorMessage.classList.add('hidden');
-            generateErrorText.textContent = '';
-        }
-        function showConfirmationModal(title, message, onConfirm) { /* ... same as V2 ... */
-            confirmationTitle.textContent = title;
-            confirmationMessage.innerHTML = message;
-            confirmationModal.style.display = 'flex';
-
-            confirmActionButton.onclick = () => {
-                onConfirm();
-                confirmationModal.style.display = 'none';
-            };
-            cancelActionButton.onclick = () => {
-                confirmationModal.style.display = 'none';
-            };
-        }
-
-        // --- Populate Style Presets with Recently Used ---
-        function populateStylePresets() {
-            stylePresetSelect.innerHTML = ''; // Clear existing options
-
-            if (userStats.recentlyUsedStyles && userStats.recentlyUsedStyles.length > 0) {
-                recentlyUsedStylesLabel.classList.remove('hidden');
-                const recentOptgroup = document.createElement('optgroup');
-                recentOptgroup.label = 'اخیراً استفاده شده';
-                userStats.recentlyUsedStyles.forEach(styleValue => {
-                    const preset = baseStylePresets.find(p => p.value === styleValue);
-                    if (preset) {
-                        const option = document.createElement('option');
-                        option.value = preset.value;
-                        option.textContent = preset.text;
-                        recentOptgroup.appendChild(option);
-                    }
-                });
-                stylePresetSelect.appendChild(recentOptgroup);
-
-                const divider = document.createElement('option');
-                divider.disabled = true;
-                divider.textContent = '──────────';
-                stylePresetSelect.appendChild(divider);
-            } else {
-                 recentlyUsedStylesLabel.classList.add('hidden');
-            }
+        }, "4m"); // Loop every 4 measures (slower progression)
+        Tone.Transport.bpm.value = 60; // Slower BPM for darker feel
 
 
-            const allOptgroup = document.createElement('optgroup');
-            allOptgroup.label = 'همه سبک‌ها';
-            baseStylePresets.forEach(preset => {
-                const option = document.createElement('option');
-                option.value = preset.value;
-                option.textContent = preset.text;
-                allOptgroup.appendChild(option);
-            });
-            stylePresetSelect.appendChild(allOptgroup);
-        }
-
-        async function updateUserRecentlyUsedStyles(newStyle) {
-            if (!newStyle || !userId) return;
-            let currentRecent = userStats.recentlyUsedStyles || [];
-            currentRecent = currentRecent.filter(s => s !== newStyle); // Remove if exists
-            currentRecent.unshift(newStyle); // Add to beginning
-            userStats.recentlyUsedStyles = currentRecent.slice(0, 3); // Keep only top 3
-
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-            try {
-                await updateDoc(userDocRef, { "stats.recentlyUsedStyles": userStats.recentlyUsedStyles });
-                populateStylePresets(); // Repopulate dropdown
-            } catch (error) {
-                console.error("Error updating recently used styles:", error);
-            }
-        }
-
-
-        // --- Firebase & Core Logic ---
-        async function initializeFirebaseAndLoadData() { /* ... same as V2, ensure populateStylePresets is called after userStats loaded ... */
-            if (!firebaseConfig) {
-                showToast("تنظیمات Firebase برای این برنامه در دسترس نیست. لطفاً با پشتیبانی تماس بگیرید.", "error", 10000);
-                generateButton.disabled = true;
-                return;
-            }
-            try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        userIdTextElement.textContent = userId.substring(0, 8) + "...";
-                        userIdDisplayElement.classList.remove('hidden');
-                        await Promise.all([
-                            setupUserData(),
-                            loadPromptHistory(),
-                            loadFavoriteImages(),
-                            checkDailyBonusStatus(),
-                            loadUserAchievements()
-                        ]).then(() => {
-                            renderAchievements();
-                            populateStylePresets(); // Populate after user data (including recent styles) is loaded
-                        });
-                    } else {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            try { await signInWithCustomToken(auth, __initial_auth_token); }
-                            catch (error) { console.error("Custom token sign-in error:", error); await signInAnonymously(auth); }
-                        } else { await signInAnonymously(auth); }
-                    }
-                });
-            } catch (error) {
-                showToast("خطا در راه اندازی اولیه سرویس های برنامه.", "error", 10000);
-                console.error("Firebase Init Error:", error);
-                generateButton.disabled = true;
-            }
-        }
-
-        async function setupUserData() { /* ... same as V2, ensure recentlyUsedStyles is part of stats object ... */
-            if (!userId) return;
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-            try {
-                const docSnap = await getDoc(userDocRef);
-                if (!docSnap.exists() || typeof docSnap.data().coins === 'undefined') {
-                    const initialUserData = {
-                        coins: INITIAL_COINS,
-                        stats: {
-                            imagesGenerated: 0, achievementsUnlocked: 0, historyCount: 0, favoritesCount: 0,
-                            memberSince: serverTimestamp(), lastLogin: serverTimestamp(), dailyBonusClaims: 0,
-                            usedStyles: [], recentlyUsedStyles: [] // Initialize recentlyUsedStyles
-                        },
-                        achievements: {}
-                    };
-                    await setDoc(userDocRef, initialUserData);
-                    userStats = initialUserData.stats;
-                    userAchievements = initialUserData.achievements;
-                    updateCoinDisplay(INITIAL_COINS);
-                } else {
-                    const data = docSnap.data();
-                    userStats = data.stats || { imagesGenerated: 0, achievementsUnlocked: 0, historyCount: 0, favoritesCount: 0, memberSince: serverTimestamp(), lastLogin: serverTimestamp(), dailyBonusClaims: 0, usedStyles: [], recentlyUsedStyles: [] };
-                    userAchievements = data.achievements || {};
-                    usedStylesSet = new Set(userStats.usedStyles || []);
-                    // Ensure recentlyUsedStyles is an array
-                    userStats.recentlyUsedStyles = Array.isArray(userStats.recentlyUsedStyles) ? userStats.recentlyUsedStyles : [];
-                    updateCoinDisplay(data.coins);
-                    await updateDoc(userDocRef, { "stats.lastLogin": serverTimestamp() });
-                }
-                coinDisplayElement.classList.remove('hidden');
-                updateUserStatsDisplay();
-            } catch (error) {
-                console.error("Error setting up user data:", error);
-                showToast("خطا در بارگذاری اطلاعات کاربر.", "error");
-            }
-        }
-        function updateCoinDisplay(balance) { /* ... same as V2 ... */
-            coinBalanceElement.textContent = balance;
-            generateButtonTextEl.textContent = `خلق کن! (${IMAGE_COST} سکه)`;
-            // Disable button if balance is less than cost OR if already generating OR if in cooldown
-            generateButton.disabled = (balance < IMAGE_COST || !auth.currentUser || isGenerating || generateCooldownInterval !== null);
-            faqImageCost.textContent = IMAGE_COST;
-        }
-        function updateUserStatsDisplay() { /* ... same as V2 ... */
-            statImagesGenerated.textContent = userStats.imagesGenerated || 0;
-            statAchievementsUnlocked.textContent = Object.keys(userAchievements).filter(key => userAchievements[key].unlocked).length;
-            statHistoryCount.textContent = userStats.historyCount || 0;
-            statFavoritesCount.textContent = userStats.favoritesCount || 0;
-            if (userStats.memberSince && userStats.memberSince.toDate) {
-                 statMemberSince.textContent = userStats.memberSince.toDate().toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
-            } else if (userStats.memberSince) {
-                 try { statMemberSince.textContent = new Date(userStats.memberSince).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }); }
-                 catch (e) { statMemberSince.textContent = "نامعلوم"; }
-            } else {
-                 statMemberSince.textContent = "نامعلوم";
-            }
-        }
-        async function spendCoins(amount) { /* ... same as V2 ... */
-            if (!userId) return false;
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const userDoc = await transaction.get(userDocRef);
-                    if (!userDoc.exists()) throw "اطلاعات کاربر برای کسر سکه یافت نشد.";
-
-                    const currentCoins = userDoc.data().coins || 0;
-                    if (currentCoins < amount) throw "سکه شما برای انجام این عملیات کافی نیست.";
-
-                    const newCoins = currentCoins - amount;
-                    const newImagesGenerated = (userDoc.data().stats?.imagesGenerated || 0) + 1;
-
-                    transaction.update(userDocRef, {
-                        coins: newCoins,
-                        "stats.imagesGenerated": newImagesGenerated,
-                        "stats.lastImageGeneratedAt": serverTimestamp()
-                    });
-                    updateCoinDisplay(newCoins);
-                    userStats.imagesGenerated = newImagesGenerated;
-                    updateUserStatsDisplay();
-                    await checkAndGrantAchievement('imagesGenerated', newImagesGenerated);
-                });
-                return true;
-            } catch (error) {
-                console.error("Error spending coins:", error);
-                showToast(typeof error === 'string' ? error : "خطا در عملیات کسر سکه.", "error");
-                const docSnap = await getDoc(userDocRef);
-                if (docSnap.exists()) updateCoinDisplay(docSnap.data().coins); else updateCoinDisplay(0);
-                return false;
-            }
-        }
-        async function addCoins(amount, reason = "general") { /* ... same as V2 ... */
-            if (!userId || amount <= 0) return;
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const userDoc = await transaction.get(userDocRef);
-                    if (!userDoc.exists()) throw "اطلاعات کاربر برای افزودن سکه یافت نشد.";
-                    const currentCoins = userDoc.data().coins || 0;
-                    const newCoins = currentCoins + amount;
-                    transaction.update(userDocRef, { coins: newCoins });
-                    updateCoinDisplay(newCoins);
-                });
-                showToast(`${amount} سکه به حساب شما اضافه شد (${reason})!`, 'success');
-            } catch (error) {
-                console.error("Error adding coins:", error);
-                showToast("خطا در افزودن سکه.", "error");
-            }
-        }
-        async function checkDailyBonusStatus() { /* ... same as V2 ... */
-            if (!userId) return;
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-            try {
-                const docSnap = await getDoc(userDocRef);
-                if (docSnap.exists()) {
-                    const lastBonusClaimTimestamp = docSnap.data().stats?.lastBonusClaim;
-                    if (lastBonusClaimTimestamp) {
-                        const lastBonusClaim = lastBonusClaimTimestamp.toDate();
-                        const now = new Date();
-                        if (lastBonusClaim.toDateString() === now.toDateString()) {
-                            dailyBonusMessage.textContent = `جایزه امروز را قبلاً دریافت کرده‌اید. فردا دوباره سر بزنید!`;
-                            dailyBonusButton.disabled = true;
-                            dailyBonusButtonText.textContent = "دریافت شده";
-                        } else {
-                            dailyBonusMessage.textContent = `جایزه روزانه شما (${DAILY_BONUS_AMOUNT} سکه) آماده دریافت است!`;
-                            dailyBonusButton.disabled = false;
-                            dailyBonusButtonText.textContent = `دریافت ${DAILY_BONUS_AMOUNT} سکه`;
-                        }
-                    } else { // No lastBonusClaim, so bonus is available
-                         dailyBonusMessage.textContent = `جایزه روزانه شما (${DAILY_BONUS_AMOUNT} سکه) آماده دریافت است!`;
-                         dailyBonusButton.disabled = false;
-                         dailyBonusButtonText.textContent = `دریافت ${DAILY_BONUS_AMOUNT} سکه`;
-                    }
-                }
-            } catch (error) {
-                console.error("Error checking daily bonus:", error);
-                dailyBonusMessage.textContent = "خطا در بررسی وضعیت جایزه روزانه.";
-            }
-        }
-        dailyBonusButton.addEventListener('click', async () => { /* ... same as V2 ... */
-            if (!userId || dailyBonusButton.disabled) return;
-            dailyBonusButton.disabled = true;
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-            try {
-                await addCoins(DAILY_BONUS_AMOUNT, "جایزه روزانه");
-                const newDailyBonusClaims = (userStats.dailyBonusClaims || 0) + 1;
-                await updateDoc(userDocRef, {
-                    "stats.lastBonusClaim": serverTimestamp(),
-                    "stats.dailyBonusClaims": newDailyBonusClaims
-                });
-                userStats.dailyBonusClaims = newDailyBonusClaims;
-                dailyBonusMessage.textContent = `عالی! ${DAILY_BONUS_AMOUNT} سکه دریافت کردید. فردا برای جایزه بعدی بیایید.`;
-                dailyBonusButtonText.textContent = "دریافت شده";
-                await checkAndGrantAchievement('dailyBonusClaims', newDailyBonusClaims);
-            } catch (error) {
-                showToast("خطا در دریافت جایزه روزانه.", "error");
-                dailyBonusButton.disabled = false;
-            }
-        });
-        function updateFavoriteButtonState(isFav) { /* ... same as V2 ... */
-            currentImageIsFavorite = isFav;
-            if (isFav) {
-                favoriteButtonText.textContent = "حذف از برگزیده";
-                favoriteButton.innerHTML = `<i class="fas fa-star"></i><span>${favoriteButtonText.textContent}</span>`;
-                favoriteButton.classList.replace('btn-secondary', 'btn-warning');
-            } else {
-                favoriteButtonText.textContent = "برگزیدن";
-                favoriteButton.innerHTML = `<i class="far fa-star"></i><span>${favoriteButtonText.textContent}</span>`;
-                favoriteButton.classList.replace('btn-warning', 'btn-secondary');
-            }
-        }
-
-        // --- Generate Button Cooldown Logic ---
-        function startGenerateCooldown() {
-            let secondsRemaining = GENERATE_COOLDOWN_SECONDS;
-            generateButton.disabled = true;
-            isGenerating = true; // Set generating flag
-            cooldownTimerDisplay.classList.remove('hidden');
-
-            generateCooldownInterval = setInterval(() => {
-                secondsRemaining--;
-                cooldownTimerDisplay.textContent = `می‌توانید ${secondsRemaining} ثانیه دیگر دوباره تلاش کنید...`;
-                if (secondsRemaining <= 0) {
-                    clearInterval(generateCooldownInterval);
-                    generateCooldownInterval = null;
-                    isGenerating = false; // Reset generating flag
-                    cooldownTimerDisplay.classList.add('hidden');
-                    // Re-enable button based on coin balance
-                    const currentCoinBalance = parseInt(coinBalanceElement.textContent) || 0;
-                    generateButton.disabled = currentCoinBalance < IMAGE_COST;
-                    generateButtonTextEl.textContent = `خلق کن! (${IMAGE_COST} سکه)`; // Reset button text
-                }
-            }, 1000);
-        }
-
-        // --- Simulated Progress Bar ---
-        let progressInterval = null;
-        function startSimulatedProgress() {
-            generationProgressBarContainer.style.display = 'block';
-            generationProgressBar.style.width = '0%';
-            let currentProgress = 0;
-            const totalDuration = GENERATE_COOLDOWN_SECONDS * 1000 * 0.8; // Simulate progress over 80% of cooldown
-            const increment = 2; // percent
-
-            progressInterval = setInterval(() => {
-                currentProgress += increment;
-                if (currentProgress <= 95) { // Don't let it hit 100% until actual completion
-                    generationProgressBar.style.width = `${currentProgress}%`;
-                } else {
-                    // Keep it at 95% until image is actually loaded or error occurs
-                }
-            }, totalDuration / (100 / increment));
-        }
-
-        function stopSimulatedProgress(success = true) {
-            clearInterval(progressInterval);
-            progressInterval = null;
-            if (success) {
-                 generationProgressBar.style.width = '100%';
-                 setTimeout(() => { generationProgressBarContainer.style.display = 'none'; generationProgressBar.style.width = '0%';}, 500);
-            } else {
-                generationProgressBarContainer.style.display = 'none';
-                generationProgressBar.style.width = '0%';
-            }
-        }
-
-
-        generateButton.addEventListener('click', async () => {
-            if (!auth.currentUser || !userId) { showToast("برای خلق تصویر، ابتدا باید وارد سیستم شوید.", "error"); return; }
-            if (isGenerating || generateCooldownInterval) { showToast("لطفاً تا پایان عملیات قبلی یا cooldown صبر کنید.", "warning"); return; }
-
-            let mainPrompt = sanitizeInput(promptInput.value, MAX_PROMPT_LENGTH);
-            let negativePrompt = sanitizeInput(negativePromptInput.value, MAX_NEGATIVE_PROMPT_LENGTH);
-
-            if (!mainPrompt) { displayGenError("لطفاً یک توصیف معتبر برای تصویر اصلی وارد کنید."); return; }
-            clearGenError();
-
-            const selectedStyle = stylePresetSelect.value;
-            const aspectRatioHint = aspectRatioSelect.value;
-            let finalUserPrompt = mainPrompt;
-            if (selectedStyle) finalUserPrompt += `, ${selectedStyle}`;
-            if (aspectRatioHint) finalUserPrompt += `${aspectRatioHint}`;
-            if (negativePrompt) finalUserPrompt += `. Negative prompt: ${negativePrompt}`;
-
-            currentFullPromptForCopy = `پرامپت اصلی: ${mainPrompt}`;
-            if (selectedStyle) currentFullPromptForCopy += ` | سبک: ${stylePresetSelect.options[stylePresetSelect.selectedIndex].text}`;
-            if (aspectRatioHint) currentFullPromptForCopy += ` | نسبت تصویر (راهنما): ${aspectRatioSelect.options[aspectRatioSelect.selectedIndex].text}`;
-            if (negativePrompt) currentFullPromptForCopy += ` | پرامپت منفی: ${negativePrompt}`;
-
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-            const currentCoinSnap = await getDoc(userDocRef);
-            if (!currentCoinSnap.exists() || (currentCoinSnap.data().coins || 0) < IMAGE_COST) {
-                displayGenError(`سکه کافی ندارید! (نیاز: ${IMAGE_COST} سکه)`);
-                updateCoinDisplay(currentCoinSnap.exists() ? (currentCoinSnap.data().coins || 0) : 0);
-                return;
-            }
-
-            isGenerating = true; // Set flag
-            startGenerateCooldown(); // Start cooldown timer immediately
-            startSimulatedProgress(); // Start progress bar
-
-            loadingIndicator.style.display = 'block';
-            loadingStatusText.textContent = randomLoadingTexts[Math.floor(Math.random() * randomLoadingTexts.length)];
-            loadingStatusText.style.display = 'block';
-            generateButton.innerHTML = '<i class="fas fa-atom fa-spin mr-2"></i><span>در حال پردازش ایمن...</span>';
-            generatedImage.classList.remove('visible');
-            setTimeout(() => { placeholderText.classList.remove('hidden'); }, 100);
-            actionButtonsContainer.classList.remove('visible');
-            currentImageDataBase64 = null;
-            currentPromptForFavorite = mainPrompt;
-
-            let imageGeneratedSuccessfully = false;
-            try {
-                // Construct API URL inside the function to use the globalApiKey
-                const currentApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${globalApiKey}`;
-                const payload = { instances: [{ "prompt": finalUserPrompt }], parameters: { "sampleCount": 1 } };
-                const response = await fetch(currentApiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-
-                if (!response.ok) {
-                    const errorStatus = response.status;
-                    const errData = await response.json().catch(() => ({ error: { message: "پاسخ غیرمنتظره از سرور تصویرساز."} }));
-                    let userErrorMessage = `خطا در ارتباط با سرویس تصویرساز (${errorStatus}): ${errData.error?.message || "خطای نامشخص"}`;
-                    if (errorStatus === 401) {
-                        userErrorMessage = "خطای احراز هویت (401): به نظر می‌رسد مشکلی در اتصال به سرویس تصویرساز وجود دارد. لطفاً چند لحظه صبر کرده و دوباره تلاش کنید یا صفحه را رفرش نمایید.";
-                    } else if (errorStatus === 429) { // Too Many Requests
-                        userErrorMessage = "خطای سرور (429): تعداد درخواست‌های شما بیش از حد مجاز بوده است. لطفاً کمی صبر کنید و سپس دوباره تلاش کنید.";
-                    } else if (errorStatus >= 500) {
-                        userErrorMessage = `خطای سرور (${errorStatus}): مشکلی در سرور تصویرساز رخ داده است. لطفاً بعداً دوباره تلاش کنید.`;
-                    }
-                    throw new Error(userErrorMessage);
-                }
-                const result = await response.json();
-                if (result.predictions && result.predictions[0]?.bytesBase64Encoded) {
-                    currentImageDataBase64 = result.predictions[0].bytesBase64Encoded;
-                    generatedImage.src = `data:image/png;base64,${currentImageDataBase64}`;
-                    placeholderText.classList.add('hidden');
-                    generatedImage.classList.add('visible');
-                    actionButtonsContainer.classList.add('visible');
-                    downloadButton.classList.remove('hidden');
-                    favoriteButton.classList.remove('hidden');
-                    copyPromptButton.classList.remove('hidden');
-                    await checkIfCurrentImageIsFavorite(mainPrompt, currentImageDataBase64);
-                    imageGeneratedSuccessfully = true;
-                    await saveToPromptHistory(mainPrompt, negativePrompt, selectedStyle, aspectRatioHint, currentImageDataBase64);
-                    if (selectedStyle) await updateUserRecentlyUsedStyles(selectedStyle);
-
-
-                    if (negativePrompt) await checkAndGrantAchievement('USED_NEGATIVE_PROMPT');
-                    if (selectedStyle) {
-                        await checkAndGrantAchievement('USED_STYLE_PRESET');
-                        if (!usedStylesSet.has(selectedStyle)) {
-                            usedStylesSet.add(selectedStyle);
-                            await updateDoc(userDocRef, { "stats.usedStyles": Array.from(usedStylesSet) });
-                            if (usedStylesSet.size >= 5) {
-                                await checkAndGrantAchievement('FIVE_STYLES_USED');
-                            }
-                        }
-                    }
-                     stopSimulatedProgress(true);
-                } else {
-                    stopSimulatedProgress(false);
-                    throw new Error("پاسخ دریافتی از سرویس تصویرساز معتبر نبود یا تصویری تولید نشد.");
-                }
-            } catch (error) {
-                console.error("Image Generation Process Error:", error);
-                displayGenError(error.message || "خطای ناشناخته در فرآیند تولید تصویر.");
-                stopSimulatedProgress(false);
-            } finally {
-                // Cooldown and isGenerating flag are handled by startGenerateCooldown interval
-                loadingIndicator.style.display = 'none';
-                loadingStatusText.style.display = 'none';
-                if (imageGeneratedSuccessfully) {
-                    const spentOk = await spendCoins(IMAGE_COST);
-                    if(!spentOk) showToast("تصویر تولید شد، اما در کسر سکه مشکلی پیش آمد!", "error");
-                }
-                // Button text and disabled state will be reset by cooldown timer when it finishes.
-                // Refresh coin display in case it changed due to other factors.
-                const finalCoinSnap = await getDoc(userDocRef);
-                if (finalCoinSnap.exists()) updateCoinDisplay(finalCoinSnap.data().coins);
-            }
-        });
-
-        // --- Character Counters ---
-        promptInput.addEventListener('input', () => { /* ... same as V2 ... */
-            const count = promptInput.value.length;
-            promptCharCounter.textContent = `${count}/${MAX_PROMPT_LENGTH}`;
-            if (count > MAX_PROMPT_LENGTH) promptCharCounter.classList.add('text-red-500');
-            else promptCharCounter.classList.remove('text-red-500');
-            clearGenError();
-        });
-        negativePromptInput.addEventListener('input', () => { /* ... same as V2 ... */
-            const count = negativePromptInput.value.length;
-            negativePromptCharCounter.textContent = `${count}/${MAX_NEGATIVE_PROMPT_LENGTH}`;
-            if (count > MAX_NEGATIVE_PROMPT_LENGTH) negativePromptCharCounter.classList.add('text-red-500');
-            else negativePromptCharCounter.classList.remove('text-red-500');
-        });
-
-        // --- Surprise Me ---
-        const samplePromptsV3 = [
-            { main: "یک کتابخانه جادویی در دل یک درخت کهن، نورهای اثیری از پنجره‌ها می‌تابد", style: "fantasy concept art", negative: "تاریک، ترسناک" },
-            { main: "گربه سامورایی با زره کامل در حال مدیتیشن زیر شکوفه‌های گیلاس", style: "anime style", negative: "پس‌زمینه شلوغ" },
-            { main: "شهر آینده‌نگرانه معلق در ابرها با خودروهای پرنده", style: "cyberpunk art", negative: "آسمان صاف، روز روشن" },
-            { main: "اژدهای یخی عظیم‌الجثه بر فراز کوهستان برفی، طوفان کولاک", style: "epic digital art", negative: "آفتابی، بدون برف" },
-            { main: "منظره غروب خورشید در یک سیاره بیگانه با دو ماه در آسمان، گیاهان درخشان", style: "photorealistic", negative: "انسان، ساختمان" },
-            { main: "ربات کوچک دوست‌داشتنی در حال باغبانی گل‌های فلزی در یک باغ پساآخرالزمانی", style: "steampunk", negative: "زنگ‌زده، خراب" },
-            { main: "پرتره یک زن فضانورد با کلاهی که کهکشان‌ها در آن منعکس شده‌اند، نگاه متفکر", style: "3d render", negative: "کارتونی، طراحی ساده" },
-            { main: "جنگل انبوه با قارچ‌های غول‌پیکر و درخشان، موجودات افسانه‌ای کوچک", style: "watercolor painting", negative: "رنگ‌های تیره، ترسناک" },
-            { main: "یک کافه دنج در کوچه‌ای بارانی در پاریس، نور گرم از پنجره‌ها", style: "impressionist painting", negative: "شلوغ، مدرن" },
-            { main: "ماشین زمان ساخته شده از قطعات ساعت و چوب، درخشش آبی از درون آن", style: "low poly", negative: "پیچیده، جزئیات زیاد" }
-        ];
-        surpriseMeButton.addEventListener('click', () => {
-            const randomIdea = samplePromptsV3[Math.floor(Math.random() * samplePromptsV3.length)];
-            promptInput.value = randomIdea.main;
-            if (Math.random() < 0.5) { // 50% chance to also suggest style and negative
-                negativePromptInput.value = randomIdea.negative || "";
-                stylePresetSelect.value = randomIdea.style || "";
-            } else {
-                negativePromptInput.value = "";
-                stylePresetSelect.value = ""; // Or a random one from baseStylePresets
-            }
-            promptInput.dispatchEvent(new Event('input'));
-            negativePromptInput.dispatchEvent(new Event('input'));
-            showToast("ایده پیشنهادی در فرم قرار گرفت!", "info");
-        });
-
-        // --- Prompt History, Favorites ---
-        function renderSkeletonItems(container, count = 3, type = 'list') { /* ... same as V2 ... */
-            container.innerHTML = '';
-            for (let i = 0; i < count; i++) {
-                const skeleton = document.createElement('div');
-                if (type === 'list') {
-                    skeleton.className = 'skeleton-item';
-                    skeleton.innerHTML = `
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 bg-gray-300 html.dark:bg-gray-600 rounded mr-3 skeleton-line"></div>
-                            <div class="flex-1">
-                                <div class="skeleton-line w-3/4"></div>
-                                <div class="skeleton-line w-1/2 mt-1"></div>
-                            </div>
-                        </div>`;
-                } else if (type === 'achievement') {
-                     skeleton.className = 'skeleton-item p-4'; // Adjusted padding for achievement
-                     skeleton.innerHTML = `
-                        <div class="flex items-center mb-2">
-                            <div class="w-8 h-8 bg-gray-300 html.dark:bg-gray-600 rounded-full mr-2 skeleton-line"></div>
-                            <div class="skeleton-line w-1/2"></div>
-                        </div>
-                        <div class="skeleton-line w-3/4"></div>
-                        <div class="skeleton-line w-1/4 mt-1"></div>`;
-                }
-                container.appendChild(skeleton);
-            }
-        }
-
-        async function saveToPromptHistory(mainPrompt, negativePrompt, style, aspectRatio, imageDataBase64) { /* ... same as V2, ensure all fields are saved ... */
-            if (!userId || !mainPrompt) return;
-            const historyColRef = collection(db, `artifacts/${appId}/users/${userId}/promptHistory`);
-            try {
-                const historyData = {
-                    mainPrompt: sanitizeInput(mainPrompt),
-                    negativePrompt: sanitizeInput(negativePrompt), // Save negative prompt
-                    style: sanitizeInput(style),
-                    aspectRatio: sanitizeInput(aspectRatio), // Save aspect ratio hint
-                    thumbnail: imageDataBase64.substring(0, 10000), // Ensure this is a reasonable size
-                    createdAt: serverTimestamp()
-                };
-                await addDoc(historyColRef, historyData);
-                userStats.historyCount = (userStats.historyCount || 0) + 1;
-                updateUserStatsDisplay();
-
-                const q = query(historyColRef, orderBy("createdAt", "desc"));
-                const snapshot = await getDocs(q);
-                if (snapshot.docs.length > MAX_HISTORY) {
-                    const batch = writeBatch(db);
-                    for (let i = MAX_HISTORY; i < snapshot.docs.length; i++) {
-                        batch.delete(snapshot.docs[i].ref);
-                    }
-                    await batch.commit();
-                    userStats.historyCount = MAX_HISTORY;
-                    updateUserStatsDisplay();
-                }
-                if (document.getElementById('historyTab').classList.contains('active')) {
-                    loadPromptHistory(); // Refresh list only if tab is active
-                }
-            } catch (error) { console.error("Error saving prompt history:", error); }
-        }
-
-        async function loadPromptHistory() { /* ... same as V2, ensure all fields are used when reloading ... */
-            if (!userId) return;
-            const currentTabLoadingIndicator = document.querySelector('.tab-button[data-tab="historyTab"] .tab-loading-indicator');
-            if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'block';
-            renderSkeletonItems(promptHistoryList, 5);
-
-            const historyColRef = collection(db, `artifacts/${appId}/users/${userId}/promptHistory`);
-            const q = query(historyColRef, orderBy("createdAt", "desc"), limit(MAX_HISTORY));
-            try {
-                const snapshot = await getDocs(q);
-                promptHistoryList.innerHTML = '';
-                if (snapshot.empty) {
-                    emptyHistoryText.classList.remove('hidden');
-                    if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'none';
-                    return;
-                }
-                emptyHistoryText.classList.add('hidden');
-                snapshot.docs.forEach(docSnap => {
-                    const item = docSnap.data();
-                    const div = document.createElement('div');
-                    div.className = 'list-item';
-                    let displayPrompt = `اصلی: ${item.mainPrompt}`;
-                    if(item.style) displayPrompt += ` | سبک: ${baseStylePresets.find(p=>p.value===item.style)?.text || item.style}`;
-                    if(item.negativePrompt) displayPrompt += ` | منفی: ${item.negativePrompt}`;
-                    if(item.aspectRatio) displayPrompt += ` | نسبت: ${aspectRatioSelect.options[[...aspectRatioSelect.options].findIndex(o => o.value === item.aspectRatio)]?.text || item.aspectRatio.replace(',','').trim()}`;
-
-
-                    div.innerHTML = `
-                        <img src="data:image/png;base64,${item.thumbnail}" alt="تصویر کوچک تاریخچه" class="list-item-image" title="بزرگنمایی تصویر کوچک">
-                        <div class="list-item-content">
-                            <p class="list-item-prompt" title="${displayPrompt}">${displayPrompt.substring(0,150)}${displayPrompt.length > 150 ? '...' : ''}</p>
-                            <p class="list-item-timestamp">${item.createdAt?.toDate().toLocaleString('fa-IR', {dateStyle: 'short', timeStyle: 'short'}) || 'زمان نامشخص'}</p>
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn btn-sm btn-outline use-prompt-btn" title="استفاده از این پرامپت"><i class="fas fa-redo"></i></button>
-                            <button class="btn btn-sm btn-secondary copy-history-prompt-btn" title="کپی پرامپت کامل"><i class="fas fa-copy"></i></button>
-                            <button class="btn btn-sm btn-danger delete-history-item-btn" data-id="${docSnap.id}" title="حذف این مورد"><i class="fas fa-trash"></i></button>
-                        </div>
-                    `;
-                    div.querySelector('.use-prompt-btn').addEventListener('click', () => {
-                        promptInput.value = item.mainPrompt || '';
-                        negativePromptInput.value = item.negativePrompt || ''; // Load negative prompt
-                        stylePresetSelect.value = item.style || '';
-                        aspectRatioSelect.value = item.aspectRatio || ''; // Load aspect ratio
-                        promptInput.dispatchEvent(new Event('input'));
-                        negativePromptInput.dispatchEvent(new Event('input'));
-                        showToast('پرامپت در فرم بارگذاری شد!', 'info');
-                        document.querySelector('.tab-button[data-tab="createTab"]').click();
-                    });
-                    div.querySelector('.copy-history-prompt-btn').addEventListener('click', () => {
-                        navigator.clipboard.writeText(displayPrompt) // Use the full displayPrompt
-                            .then(() => showToast('پرامپت کامل کپی شد!', 'success'))
-                            .catch(err => showToast('خطا در کپی پرامپت.', 'error'));
-                    });
-                    div.querySelector('.delete-history-item-btn').addEventListener('click', (e) => { /* ... same as V2 ... */
-                        const itemId = e.currentTarget.dataset.id;
-                        showConfirmationModal("حذف از تاریخچه", "آیا از حذف این مورد از تاریخچه مطمئن هستید؟", async () => {
-                            await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/promptHistory`, itemId));
-                            loadPromptHistory();
-                            userStats.historyCount = Math.max(0, (userStats.historyCount || 1) - 1);
-                            updateUserStatsDisplay();
-                            showToast("مورد از تاریخچه حذف شد.", "success");
-                        });
-                    });
-                     div.querySelector('.list-item-image').addEventListener('click', () => {
-                        modalImageSrc.src = `data:image/png;base64,${item.thumbnail}`;
-                        imageModal.style.display = 'flex';
-                    });
-                    promptHistoryList.appendChild(div);
-                });
-                userStats.historyCount = snapshot.docs.length;
-                updateUserStatsDisplay();
-            } catch (error) {
-                console.error("Error loading prompt history:", error);
-                promptHistoryList.innerHTML = '';
-                emptyHistoryText.classList.remove('hidden');
-                emptyHistoryText.textContent = "خطا در بارگذاری تاریخچه.";
-            } finally {
-                if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'none';
-            }
-        }
-        clearPromptHistoryButton.addEventListener('click', () => { /* ... same as V2 ... */
-            showConfirmationModal("پاک کردن کل تاریخچه", "آیا از پاک کردن تمام تاریخچه آفرینش‌ها مطمئن هستید؟ این عمل غیرقابل بازگشت است.", async () => {
-                const historyColRef = collection(db, `artifacts/${appId}/users/${userId}/promptHistory`);
-                const snapshot = await getDocs(historyColRef);
-                const batch = writeBatch(db);
-                snapshot.docs.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                loadPromptHistory();
-                userStats.historyCount = 0;
-                updateUserStatsDisplay();
-                showToast("کل تاریخچه پاک شد.", "success");
-            });
-        });
-
-        async function checkIfCurrentImageIsFavorite(promptText, imageDataBase64) { /* ... same as V2 ... */
-            if (!userId || !promptText || !imageDataBase64) {
-                updateFavoriteButtonState(false);
-                return;
-            }
-            const imageSignature = imageDataBase64.substring(0, 50);
-            const favoritesColRef = collection(db, `artifacts/${appId}/users/${userId}/favorites`);
-            // Query by prompt and imageSignature for better accuracy
-            const q = query(favoritesColRef, where("prompt", "==", sanitizeInput(promptText)), where("imageSignature", "==", imageSignature), limit(1));
-            try {
-                const snapshot = await getDocs(q);
-                updateFavoriteButtonState(!snapshot.empty);
-            } catch (error) {
-                console.error("Error checking favorite status:", error);
-                updateFavoriteButtonState(false);
-            }
-        }
-        favoriteButton.addEventListener('click', async () => { /* ... same as V2, ensure prompt and imageSignature are used ... */
-            if (!userId || !currentPromptForFavorite || !currentImageDataBase64) {
-                showToast("ابتدا یک تصویر تولید کنید.", "error");
-                return;
-            }
-            const favoritesColRef = collection(db, `artifacts/${appId}/users/${userId}/favorites`);
-            const sanitizedPrompt = sanitizeInput(currentPromptForFavorite);
-            const imageSignature = currentImageDataBase64.substring(0, 50);
-
-            if (currentImageIsFavorite) {
-                showConfirmationModal("حذف از برگزیده‌ها", "آیا از حذف این تصویر از برگزیده‌ها مطمئن هستید؟", async () => {
-                    const q = query(favoritesColRef, where("prompt", "==", sanitizedPrompt), where("imageSignature", "==", imageSignature), limit(1));
-                    const snapshot = await getDocs(q);
-                    if (!snapshot.empty) {
-                        await deleteDoc(snapshot.docs[0].ref);
-                        updateFavoriteButtonState(false);
-                        showToast("تصویر از برگزیده‌ها حذف شد.", "success");
-                        userStats.favoritesCount = Math.max(0, (userStats.favoritesCount || 1) - 1);
-                        updateUserStatsDisplay();
-                        if (document.getElementById('favoritesTab').classList.contains('active')) loadFavoriteImages();
-                    }
-                });
-            } else {
-                const qCount = query(favoritesColRef); // Query to count existing favorites
-                const countSnapshot = await getDocs(qCount);
-                if (countSnapshot.docs.length >= MAX_FAVORITES) {
-                    showToast(`شما به حداکثر تعداد (${MAX_FAVORITES}) تصویر برگزیده رسیده‌اید.`, "warning");
-                    return;
-                }
-                await addDoc(favoritesColRef, {
-                    prompt: sanitizedPrompt,
-                    fullPrompt: currentFullPromptForCopy, // Save the full prompt for favorites
-                    imageData: currentImageDataBase64,
-                    imageSignature: imageSignature,
-                    createdAt: serverTimestamp()
-                });
-                updateFavoriteButtonState(true);
-                showToast("تصویر به برگزیده‌ها اضافه شد!", "success");
-                userStats.favoritesCount = (userStats.favoritesCount || 0) + 1;
-                updateUserStatsDisplay();
-                if (document.getElementById('favoritesTab').classList.contains('active')) loadFavoriteImages();
-                await checkAndGrantAchievement('FIRST_FAVORITE');
-                if (userStats.favoritesCount >= 10) await checkAndGrantAchievement('TEN_FAVORITES');
-            }
-        });
-
-        async function loadFavoriteImages() { /* ... same as V2, ensure fullPrompt is used if available ... */
-            if (!userId) return;
-            const currentTabLoadingIndicator = document.querySelector('.tab-button[data-tab="favoritesTab"] .tab-loading-indicator');
-            if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'block';
-            renderSkeletonItems(favoriteImageList, 3);
-
-            const favoritesColRef = collection(db, `artifacts/${appId}/users/${userId}/favorites`);
-            const q = query(favoritesColRef, orderBy("createdAt", "desc"), limit(MAX_FAVORITES));
-            try {
-                const snapshot = await getDocs(q);
-                favoriteImageList.innerHTML = '';
-                if (snapshot.empty) {
-                    emptyFavoritesText.classList.remove('hidden');
-                     if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'none';
-                    return;
-                }
-                emptyFavoritesText.classList.add('hidden');
-                snapshot.docs.forEach(docSnap => {
-                    const item = docSnap.data();
-                    const div = document.createElement('div');
-                    div.className = 'list-item';
-                    const displayFavPrompt = item.fullPrompt || `پرامپت: ${item.prompt}`; // Use full prompt if available
-                    div.innerHTML = `
-                        <img src="data:image/png;base64,${item.imageData}" alt="تصویر برگزیده" class="list-item-image" title="بزرگنمایی تصویر">
-                        <div class="list-item-content">
-                            <p class="list-item-prompt" title="${displayFavPrompt}">${displayFavPrompt.substring(0,150)}${displayFavPrompt.length > 150 ? '...' : ''}</p>
-                            <p class="list-item-timestamp">برگزیده شده در: ${item.createdAt?.toDate().toLocaleString('fa-IR', {dateStyle: 'short', timeStyle: 'short'}) || 'زمان نامشخص'}</p>
-                        </div>
-                        <div class="list-item-actions">
-                             <button class="btn btn-sm btn-outline use-fav-prompt-btn" title="استفاده از این پرامپت اصلی"><i class="fas fa-redo"></i></button>
-                             <button class="btn btn-sm btn-secondary copy-fav-prompt-btn" title="کپی پرامپت کامل"><i class="fas fa-copy"></i></button>
-                             <button class="btn btn-sm btn-danger delete-favorite-item-btn" data-id="${docSnap.id}" title="حذف از برگزیده‌ها"><i class="fas fa-trash"></i></button>
-                        </div>
-                    `;
-                    div.querySelector('.list-item-image').addEventListener('click', () => { /* ... same as V2 ... */
-                        modalImageSrc.src = `data:image/png;base64,${item.imageData}`;
-                        imageModal.style.display = 'flex';
-                    });
-                    div.querySelector('.use-fav-prompt-btn').addEventListener('click', () => { /* ... same as V2, use item.prompt for main prompt input ... */
-                        promptInput.value = item.prompt || ''; // Use the base prompt for simplicity here
-                        // Extract negative and style from fullPrompt if needed, or clear them
-                        negativePromptInput.value = ''; // Clear for now, could parse from item.fullPrompt
-                        stylePresetSelect.value = '';   // Clear for now
-                        aspectRatioSelect.value = ''; // Clear for now
-                        promptInput.dispatchEvent(new Event('input'));
-                        showToast('پرامپت اصلی در فرم بارگذاری شد!', 'info');
-                        document.querySelector('.tab-button[data-tab="createTab"]').click();
-                    });
-                    div.querySelector('.copy-fav-prompt-btn').addEventListener('click', () => {
-                        navigator.clipboard.writeText(displayFavPrompt)
-                            .then(() => showToast('پرامپت کامل کپی شد!', 'success'))
-                            .catch(err => showToast('خطا در کپی پرامپت.', 'error'));
-                    });
-                    div.querySelector('.delete-favorite-item-btn').addEventListener('click', (e) => { /* ... same as V2 ... */
-                        const itemId = e.currentTarget.dataset.id;
-                        showConfirmationModal("حذف از برگزیده‌ها", "آیا از حذف این تصویر از برگزیده‌ها مطمئن هستید؟", async () => {
-                            await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/favorites`, itemId));
-                            loadFavoriteImages();
-                            userStats.favoritesCount = Math.max(0, (userStats.favoritesCount || 1) - 1);
-                            updateUserStatsDisplay();
-                            showToast("تصویر از برگزیده‌ها حذف شد.", "success");
-                        });
-                    });
-                    favoriteImageList.appendChild(div);
-                });
-                userStats.favoritesCount = snapshot.docs.length;
-                updateUserStatsDisplay();
-            } catch (error) {
-                console.error("Error loading favorite images:", error);
-                favoriteImageList.innerHTML = '';
-                emptyFavoritesText.classList.remove('hidden');
-                emptyFavoritesText.textContent = "خطا در بارگذاری برگزیده‌ها.";
-            } finally {
-                 if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'none';
-            }
-        }
-        clearFavoritesButton.addEventListener('click', () => { /* ... same as V2 ... */
-            showConfirmationModal("پاک کردن کل برگزیده‌ها", "آیا از پاک کردن تمام تصاویر برگزیده مطمئن هستید؟ این عمل غیرقابل بازگشت است.", async () => {
-                const favColRef = collection(db, `artifacts/${appId}/users/${userId}/favorites`);
-                const snapshot = await getDocs(favColRef);
-                const batch = writeBatch(db);
-                snapshot.docs.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                loadFavoriteImages();
-                userStats.favoritesCount = 0;
-                updateUserStatsDisplay();
-                showToast("کل برگزیده‌ها پاک شد.", "success");
-            });
-        });
-
-
-        // --- Achievements ---
-        async function loadUserAchievements() { /* ... same as V2 ... */
-            if (!userId) return;
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-            try {
-                const docSnap = await getDoc(userDocRef);
-                if (docSnap.exists() && docSnap.data().achievements) {
-                    userAchievements = docSnap.data().achievements;
-                } else {
-                    userAchievements = {};
-                }
-            } catch (error) {
-                console.error("Error loading user achievements:", error);
-                userAchievements = {};
-            }
-        }
-        function renderAchievements() { /* ... same as V2, ensure skeleton is shown ... */
-            if (!userId) return;
-            const currentTabLoadingIndicator = document.querySelector('.tab-button[data-tab="achievementsTab"] .tab-loading-indicator');
-            if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'block';
-            renderSkeletonItems(achievementsList, Object.keys(ACHIEVEMENT_CONFIG).length, 'achievement');
-
-            setTimeout(() => {
-                achievementsList.innerHTML = '';
-                if (Object.keys(ACHIEVEMENT_CONFIG).length === 0) {
-                    emptyAchievementsText.classList.remove('hidden');
-                    if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'none';
-                    return;
-                }
-                emptyAchievementsText.classList.add('hidden');
-
-                for (const key in ACHIEVEMENT_CONFIG) {
-                    const achConfig = ACHIEVEMENT_CONFIG[key];
-                    const userAch = userAchievements[key];
-                    const isAchieved = userAch && userAch.unlocked;
-
-                    const div = document.createElement('div');
-                    div.className = `achievement-item ${isAchieved ? 'achieved' : ''}`;
-                    div.title = isAchieved ? `کسب شده در: ${userAch.unlockedAt?.toDate().toLocaleDateString('fa-IR') || 'تاریخ نامشخص'}` : `جایزه: ${achConfig.reward} سکه`;
-                    div.innerHTML = `
-                        <div class="achievement-header">
-                            <i class="fas ${achConfig.icon} achievement-icon"></i>
-                            <div>
-                                <h4 class="achievement-title">${achConfig.name}</h4>
-                                <p class="achievement-desc">${achConfig.description}</p>
-                            </div>
-                        </div>
-                        ${isAchieved ? `<p class="achievement-reward"><i class="fas fa-check-circle mr-1"></i>کسب شده در: ${userAch.unlockedAt?.toDate().toLocaleDateString('fa-IR', { year: 'numeric', month: 'short', day: 'numeric' }) || 'تاریخ نامشخص'}</p>`
-                                     : (achConfig.reward ? `<p class="achievement-reward">جایزه: ${achConfig.reward} سکه</p>` : '')}
-                    `;
-                    achievementsList.appendChild(div);
-                }
-                updateUserStatsDisplay();
-                if(currentTabLoadingIndicator) currentTabLoadingIndicator.style.display = 'none';
-            }, 500);
-        }
-        async function checkAndGrantAchievement(type, value = null) { /* ... same as V2 ... */
-            if (!userId) return;
-            let achievementToGrant = null;
-            // Logic for determining achievementToGrant based on type and value (same as V2)
-            if (type === 'imagesGenerated') {
-                if (value === 1 && !userAchievements[ACHIEVEMENT_CONFIG.FIRST_IMAGE.id]?.unlocked) achievementToGrant = ACHIEVEMENT_CONFIG.FIRST_IMAGE;
-                else if (value >= 10 && !userAchievements[ACHIEVEMENT_CONFIG.TEN_IMAGES.id]?.unlocked) achievementToGrant = ACHIEVEMENT_CONFIG.TEN_IMAGES;
-                else if (value >= 50 && !userAchievements[ACHIEVEMENT_CONFIG.FIFTY_IMAGES.id]?.unlocked) achievementToGrant = ACHIEVEMENT_CONFIG.FIFTY_IMAGES;
-            } else if (type === 'FIRST_FAVORITE' && !userAchievements[ACHIEVEMENT_CONFIG.FIRST_FAVORITE.id]?.unlocked) {
-                achievementToGrant = ACHIEVEMENT_CONFIG.FIRST_FAVORITE;
-            } else if (type === 'TEN_FAVORITES' && userStats.favoritesCount >= 10 && !userAchievements[ACHIEVEMENT_CONFIG.TEN_FAVORITES.id]?.unlocked) { // Check userStats.favoritesCount
-                achievementToGrant = ACHIEVEMENT_CONFIG.TEN_FAVORITES;
-            } else if (type === 'USED_NEGATIVE_PROMPT' && !userAchievements[ACHIEVEMENT_CONFIG.USED_NEGATIVE_PROMPT.id]?.unlocked) {
-                achievementToGrant = ACHIEVEMENT_CONFIG.USED_NEGATIVE_PROMPT;
-            } else if (type === 'USED_STYLE_PRESET' && !userAchievements[ACHIEVEMENT_CONFIG.USED_STYLE_PRESET.id]?.unlocked) {
-                achievementToGrant = ACHIEVEMENT_CONFIG.USED_STYLE_PRESET;
-            } else if (type === 'FIVE_STYLES_USED' && userStats.usedStyles?.length >= 5 && !userAchievements[ACHIEVEMENT_CONFIG.FIVE_STYLES_USED.id]?.unlocked) { // Check userStats.usedStyles.length
-                 achievementToGrant = ACHIEVEMENT_CONFIG.FIVE_STYLES_USED;
-            } else if (type === 'dailyBonusClaims') {
-                if (value >= 3 && !userAchievements[ACHIEVEMENT_CONFIG.DAILY_BONUS_CLAIMED_3_TIMES.id]?.unlocked) achievementToGrant = ACHIEVEMENT_CONFIG.DAILY_BONUS_CLAIMED_3_TIMES;
-            }
-
-            if (achievementToGrant && (!userAchievements[achievementToGrant.id] || !userAchievements[achievementToGrant.id].unlocked)) {
-                const userDocRef = doc(db, `artifacts/${appId}/users/${userId}`);
-                const achievementKey = `achievements.${achievementToGrant.id}`;
+        async function initAudio() {
+            if (Tone.context.state !== 'running') {
                 try {
-                    await updateDoc(userDocRef, {
-                        [achievementKey]: { unlocked: true, unlockedAt: serverTimestamp() },
-                        "stats.achievementsUnlocked": (userStats.achievementsUnlocked || 0) + 1
-                    });
-                    userAchievements[achievementToGrant.id] = { unlocked: true, unlockedAt: Timestamp.now() };
-                    userStats.achievementsUnlocked = (userStats.achievementsUnlocked || 0) + 1;
-                    showToast(`دستاورد جدید: ${achievementToGrant.name}!`, 'success');
-                    if (achievementToGrant.reward > 0) {
-                        await addCoins(achievementToGrant.reward, `جایزه دستاورد: ${achievementToGrant.name}`);
-                    }
-                    if (document.getElementById('achievementsTab').classList.contains('active')) {
-                        renderAchievements();
-                    }
-                    updateUserStatsDisplay();
-                } catch (error) {
-                    console.error("Error granting achievement:", error);
+                    await Tone.start();
+                    console.log('AudioContext started by Tone.js');
+                } catch (e) {
+                    console.error("Error starting AudioContext:", e);
                 }
             }
         }
+        // It's good practice to have a clear user interaction to start audio
+        document.body.addEventListener('click', initAudio, { once: true });
+        musicToggleButton.addEventListener('click', initAudio, { once: true }); // Also for music button
 
 
-        // --- Settings Tab Logic ---
-        showHelpButton.addEventListener('click', () => helpModal.style.display = 'flex');
-        closeHelpModal.addEventListener('click', () => helpModal.style.display = 'none');
-        gotItHelpButton.addEventListener('click', () => helpModal.style.display = 'none');
-        faqContainer.addEventListener('click', (e) => { /* ... same as V2 ... */
-            const question = e.target.closest('.faq-question');
-            if (question) {
-                const item = question.parentElement;
-                item.classList.toggle('open');
+        function playSoundEffect(type) {
+            if (!soundEffectsEnabled || !Tone.context || Tone.context.state !== 'running') return;
+            try {
+                const now = Tone.now();
+                switch (type) {
+                    case 'move': moveSound.triggerAttackRelease("C4", "8n", now); break;
+                    case 'win': winSound.triggerAttackRelease("G4", "4n", now); setTimeout(() => winSound.triggerAttackRelease("C5", "4n", now + 0.25), 250); break;
+                    case 'lose': loseSound.triggerAttackRelease("C3", "4n", now); setTimeout(() => loseSound.triggerAttackRelease("G2", "4n", now + 0.15), 150); break;
+                    case 'draw': drawSound.triggerAttackRelease("E4", "8n", now); setTimeout(() => drawSound.triggerAttackRelease("C4", "8n", now + 0.15), 150); break;
+                    case 'click': clickSound.triggerAttackRelease("C2", "32n", now, 0.5); break;
+                    case 'hint': hintSound.triggerAttackRelease("A4", "16n", now); break;
+                }
+            } catch (error) { console.error("Error playing sound effect:", error); }
+        }
+
+        function toggleMusic() {
+            // initAudio(); // Ensure audio context is running - called on body/button click now
+            if (Tone.context.state !== 'running') {
+                console.warn("Audio context not running. Click screen or music button to enable.");
+                // Optionally provide user feedback here if audio isn't starting
+                return;
             }
+
+            musicEnabled = !musicEnabled;
+            if (musicEnabled) {
+                Tone.Transport.start();
+                backgroundMusic.start(0);
+                musicToggleButton.textContent = "🎵 موسیقی: روشن";
+                musicToggleButton.classList.remove('muted');
+            } else {
+                backgroundMusic.stop();
+                // Tone.Transport.stop(); // Stopping the loop should be enough
+                musicToggleButton.textContent = "🎵 موسیقی: خاموش";
+                musicToggleButton.classList.add('muted');
+            }
+            playSoundEffect('click');
+        }
+
+        musicVolumeSlider.addEventListener('input', (e) => {
+            if (Tone.context.state !== 'running') return;
+            const gainValue = parseFloat(e.target.value);
+            musicVolume.volume.value = Tone.gainToDb(gainValue);
         });
 
-        // --- Tabbed Interface & Modal Logic ---
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                const tabId = button.dataset.tab;
-                tabContents.forEach(content => {
-                    content.classList.toggle('active', content.id === tabId);
-                });
 
-                const currentTabLoadingIndicator = button.querySelector('.tab-loading-indicator');
+        // --- AI Taunts & Chat --- (Same as previous, can be expanded)
+        const aiTaunts = {
+            startEasy: ["سفینه آماده پرتاب! بیا بازی کنیم.", "در این گستره بی‌کران، شاید بتونی مساوی کنی.", "آماده‌ای برای یه گشت و گذار ساده در کهکشان دوز؟"],
+            startMedium: ["فکر می‌کنی می‌تونی فرمانده این ایستگاه فضایی بشی؟", "حرکاتت رو با دقت انتخاب کن، مثل انتخاب مسیر بین سیارات!", "ببینیم استراتژی کیهانیت چیه!"],
+            startHard: ["تو در مقابل یک هوش مصنوعی پیشرفته قرار گرفتی، از اعماق سحابی‌ها!", "هر حرکت اشتباه، تو رو به افق رویداد شکست نزدیک‌تر می‌کنه.", "آماده‌ای برای یک جنگ تمام عیار ستاره‌ای؟"],
+            playerMoveGeneral: ["حرکت جالبی بود...", "سیگنال دریافت شد. در حال تحلیل...", "اینطوری می‌خوای منظومه رو تسخیر کنی؟ باشه!"],
+            playerGoodMove: ["حرکت هوشمندانه‌ای بود! مثل یک جهش هایپر اسپیس دقیق!", "این یکی رو خوب اومدی!", "چالش خوبی بود، کاپیتان!"],
+            playerBadMove: ["مطمئنی این بهترین مسیر بود؟ فکر کنم به سمت یک میدان سیارکی حرکت کردی!", "شاید بهتر بود با مرکز فرماندهی مشورت می‌کردی!", "این که خیلی قابل پیش‌بینی بود، حتی برای یک ربات درجه ۳!"],
+            aiBlocksWin: ["مسیر پیروزیت توسط سپر دفاعی من مسدود شد!", "راهت رو بستم، مثل یک دیوار انرژی!", "فکر کردی می‌تونی از رادارهای من پنهان بشی؟"],
+            aiAboutToWin: ["فقط یک حرکت تا پیروزی نهایی و تسلط بر این بخش از کهکشان فاصله دارم!", "بازی داره به نفع من تموم می‌شه!", "آماده باش برای تسلیم شدن در برابر قدرت برتر!"],
+            aiWin: ["من پیروز شدم! کهکشان تحت کنترل من است!", "هوش مصنوعی همیشه یک قدم جلوتره، حتی در دورترین نقاط فضا!", "برای شکست دادن من به چیزی بیشتر از شانس نیاز داری."],
+            playerWin: ["شگفت‌انگیزه! تو بردی. تبریک می‌گم، قهرمان کهکشان!", "این بار محاسبات من دقیق نبود. یا شاید هم تو خیلی خوب بودی.", "بازی قابل تحسینی بود. این یک پیروزی درخشان در تاریخچه فضایی ثبت می‌شه!"],
+            draw: ["مساوی شدیم. انگار در این نقطه از فضا به یک بن‌بست استراتژیک رسیدیم.", "هیچکدوم نتونستیم برتری کامل پیدا کنیم. شاید یک اتحاد بهتر باشه؟", "دفعه بعد شاید یکی فرمانروای این قلمرو بشه."],
+            thinking: ["در حال پردازش داده‌های سنسورها و محاسبه بهترین مسیر...", "صبر کن، دارم با کامپیوتر مرکزی مشورت می‌کنم...", "این یکی یکم پیچیده‌ست، مثل رمزگشایی یک پیام بیگانه‌..."],
+            hintUsed: ["از سیستم ناوبری کمکی استفاده کردی؟ اشکال نداره، همه کاپیتان‌های بزرگ گاهی به نقشه نیاز دارن!", "کمک گرفتی؟ خوبه، مهم اینه که به مقصد برسی.", "نقشه راه رو دیدی؟ حالا با قدرت حرکت کن!"]
+        };
 
-                if (tabId === 'historyTab') { if (!promptHistoryList.hasChildNodes() || promptHistoryList.querySelector('.skeleton-item')) loadPromptHistory(); }
-                else if (tabId === 'favoritesTab') { if (!favoriteImageList.hasChildNodes() || favoriteImageList.querySelector('.skeleton-item')) loadFavoriteImages(); }
-                else if (tabId === 'achievementsTab') { if (!achievementsList.hasChildNodes() || achievementsList.querySelector('.skeleton-item')) renderAchievements(); }
-                else if (tabId === 'settingsTab') {
-                    const settingsTabLoadingIndicator = document.querySelector('.tab-button[data-tab="settingsTab"] .tab-loading-indicator');
-                    if(settingsTabLoadingIndicator) settingsTabLoadingIndicator.style.display = 'block';
-                    updateUserStatsDisplay();
-                    checkDailyBonusStatus().finally(() => {
-                        if(settingsTabLoadingIndicator) settingsTabLoadingIndicator.style.display = 'none';
-                    });
+        function addChatMessage(message, type = 'system') {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message', type);
+            messageDiv.textContent = message;
+            chatMessagesElement.appendChild(messageDiv);
+            chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight;
+        }
+        function getSpecificTaunt(situation) {
+            let aiWinningMove = findWinningMove(boardState, player2Symbol);
+            if (aiWinningMove !== -1) return getRandomTaunt('aiAboutToWin');
+            if (situation === 'aiBlockedWin') return getRandomTaunt('aiBlocksWin');
+            if (situation === 'hintUsed') return getRandomTaunt('hintUsed');
+            if (situation === 'playerMoved') {
+                if (Math.random() < 0.3 && currentDifficulty !== 'hard') return getRandomTaunt('playerBadMove');
+                if (Math.random() < 0.5) return getRandomTaunt('playerGoodMove');
+            }
+            return getRandomTaunt('playerMoveGeneral');
+        }
+        function getRandomTaunt(category) {
+            const taunts = aiTaunts[category];
+            return taunts[Math.floor(Math.random() * taunts.length)];
+        }
+        function getStartTaunt() {
+            if (currentGameMode === 'pvai') {
+                if (currentDifficulty === 'easy') return getRandomTaunt('startEasy');
+                if (currentDifficulty === 'medium') return getRandomTaunt('startMedium');
+                return getRandomTaunt('startHard');
+            }
+            return `بازی دو نفره شروع شد! بازیکن ۱ (${player1Symbol}) شروع می‌کنه.`;
+        }
+
+        // --- Board & Game Logic ---
+        function createBoard() {
+            boardElement.innerHTML = '';
+            winningLineCanvas.style.display = 'none';
+            
+            // Critical: Ensure boardElement itself has rendered and has dimensions
+            requestAnimationFrame(() => { // Use requestAnimationFrame to ensure layout is calculated
+                const boardRect = boardElement.getBoundingClientRect();
+                if (boardRect.width === 0 || boardRect.height === 0) {
+                    // If board still has no dimensions, try again or log error
+                    // This can happen if called too early or if display is none
+                    console.warn("Board dimensions are zero. Canvas might not size correctly yet.");
+                    // Fallback to fixed size if needed, though ideally boardRect should be correct
+                    winningLineCanvas.width = parseInt(boardElement.style.width) || 300;
+                    winningLineCanvas.height = parseInt(boardElement.style.height) || 300;
+                } else {
+                    winningLineCanvas.width = boardRect.width;
+                    winningLineCanvas.height = boardRect.height;
                 }
+                // Position canvas exactly over the board
+                // Get offsetLeft/Top from the board's direct PARENT that is positioned
+                const boardContainer = boardElement.parentElement; // Should be .board-container
+                winningLineCanvas.style.left = `${boardElement.offsetLeft}px`;
+                winningLineCanvas.style.top = `${boardElement.offsetTop}px`;
             });
-        });
 
-        generatedImage.addEventListener('click', () => { /* ... same as V2 ... */
-            if (currentImageDataBase64) {
-                modalImageSrc.src = `data:image/png;base64,${currentImageDataBase64}`;
-                imageModal.style.display = 'flex';
+
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', handleCellClick);
+                boardElement.appendChild(cell);
             }
-        });
-        closeImageModal.onclick = () => imageModal.style.display = 'none';
-        window.onclick = (event) => { /* ... same as V2 ... */
-            if (event.target == imageModal) imageModal.style.display = "none";
-            if (event.target == helpModal) helpModal.style.display = "none";
-            if (event.target == confirmationModal) confirmationModal.style.display = "none";
+        }
+        
+        function drawWinningLine(combination, winner) {
+            if (!combination) return;
+            
+            requestAnimationFrame(() => { // Ensure dimensions are up-to-date
+                const boardRect = boardElement.getBoundingClientRect();
+                if (boardRect.width === 0) return; // Don't draw if board isn't visible/sized
+
+                winningLineCanvas.width = boardRect.width;
+                winningLineCanvas.height = boardRect.height;
+                winningLineCanvas.style.left = `${boardElement.offsetLeft}px`; 
+                winningLineCanvas.style.top = `${boardElement.offsetTop}px`;
+                winningLineCanvas.style.display = 'block';
+                ctx.clearRect(0, 0, winningLineCanvas.width, winningLineCanvas.height);
+
+                const startCell = boardElement.children[combination[0]];
+                const endCell = boardElement.children[combination[2]];
+
+                // Check if cells exist
+                if (!startCell || !endCell) {
+                    console.error("Winning line cells not found.");
+                    return;
+                }
+
+                const startX = startCell.offsetLeft + startCell.offsetWidth / 2;
+                const startY = startCell.offsetTop + startCell.offsetHeight / 2;
+                const endX = endCell.offsetLeft + endCell.offsetWidth / 2;
+                const endY = endCell.offsetTop + endCell.offsetHeight / 2;
+
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = winner === player1Symbol ? '#29b6f6' : '#ffee58';
+                ctx.lineWidth = Math.max(6, boardRect.width * 0.025);
+                ctx.lineCap = 'round';
+                ctx.shadowColor = winner === player1Symbol ? 'rgba(41,182,246,0.7)' : 'rgba(255,238,88,0.7)';
+                ctx.shadowBlur = 12;
+                ctx.stroke();
+            });
         }
 
-        // --- Download Button & Copy Prompt ---
-        downloadButton.addEventListener('click', () => { /* ... same as V2 ... */
-            if (currentImageDataBase64 && currentPromptForFavorite) {
-                const promptPart = sanitizeInput(currentPromptForFavorite.substring(0, 25)).replace(/[^a-z0-9آ-ی_]/gi, '').replace(/\s+/g, '_');
-                const timestamp = new Date().toISOString().slice(0,10).replace(/-/g, '');
-                const fileName = `آفرینشگرV3_${promptPart || 'هنر_ایمن'}_${timestamp}.png`;
-                const a = document.createElement('a');
-                a.href = `data:image/png;base64,${currentImageDataBase64}`;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast("دانلود تصویر آغاز شد!", "success");
-            } else {
-                showToast("ابتدا یک تصویر تولید کنید.", "error");
+        function handleCellClick(event) {
+            if (!gameActive) return;
+            const clickedCell = event.target.closest('.cell'); // Ensure we get the cell itself
+            if (!clickedCell) return;
+
+            const clickedCellIndex = parseInt(clickedCell.dataset.index);
+
+            if (boardState[clickedCellIndex] !== '') return;
+            if (currentGameMode === 'pvai' && currentPlayer === player2Symbol) return;
+            
+            clearHint();
+            playSoundEffect('move');
+            makeMove(clickedCellIndex, currentPlayer); // currentPlayer is correct here
+
+            if (gameActive) {
+                if (currentGameMode === 'pvai') {
+                    addChatMessage(getSpecificTaunt('playerMoved'), 'ai');
+                    currentPlayer = player2Symbol; // Switch to AI
+                    updateStatus();
+                    setTimeout(aiMove, 800 + Math.random() * 500);
+                } else { // PvP
+                    currentPlayer = (currentPlayer === player1Symbol) ? player2Symbol : player1Symbol;
+                    updateStatus();
+                }
             }
-        });
-        copyPromptButton.addEventListener('click', () => { /* ... same as V2 ... */
-            if (currentFullPromptForCopy) {
-                navigator.clipboard.writeText(currentFullPromptForCopy)
-                    .then(() => showToast('پرامپت کامل کپی شد!', 'success'))
-                    .catch(err => showToast('خطا در کپی پرامپت.', 'error'));
-            } else {
-                showToast('ابتدا یک تصویر تولید کنید تا پرامپتی برای کپی وجود داشته باشد.', 'warning');
+        }
+
+        function makeMove(index, player) { // player is the one making the move
+            if (boardState[index] === '' && gameActive) {
+                boardState[index] = player;
+                const cellElement = boardElement.children[index];
+                cellElement.textContent = player;
+                cellElement.classList.add(player.toLowerCase(), 'occupied');
+                // Animation for placing piece
+                cellElement.style.transform = 'scale(0.6) rotateY(-20deg)';
+                setTimeout(() => cellElement.style.transform = 'scale(1) rotateY(0deg)', 250);
+
+                const winInfo = checkWin(player); // Check if 'player' (who just moved) won
+                if (winInfo.isWin) {
+                    endGame(false, player, winInfo.combination); // 'player' is the winner
+                } else if (boardState.every(cell => cell !== '')) {
+                    endGame(true); // Draw
+                }
+                // DO NOT switch currentPlayer here, it's handled in handleCellClick after makeMove
             }
-        });
+        }
 
 
-        // --- Initial Load ---
-        window.addEventListener('load', async () => {
-            console.log("App V3 loading with cooldown, progress bar, and more enhancements...");
-            initTheme();
-            // populateStylePresets(); // Moved to after userStats are loaded
-            await initializeFirebaseAndLoadData();
+        function checkWin(player, currentBoard = boardState) {
+            for (const combination of winningCombinations) { // winningCombinations is now globally defined
+                if (combination.every(index => currentBoard[index] === player)) {
+                    return { isWin: true, combination: combination };
+                }
+            }
+            return { isWin: false, combination: null };
+        }
+        
+        function highlightWinningCells(combination, winner) {
+            if (combination) {
+                combination.forEach(index => {
+                    boardElement.children[index]?.classList.add('win-animation');
+                });
+                drawWinningLine(combination, winner);
+            }
+        }
 
-            const container = document.querySelector('.main-container');
-            container.style.opacity = '0'; container.style.transform = 'translateY(25px) scale(0.97)';
+        function endGame(draw, winner = null, winningCombination = null) {
+            gameActive = false;
+            clearHint();
+            hintButton.disabled = true;
+            let title = '';
+            let message = '';
+            let soundToPlay = '';
+
+            if (draw) {
+                scores.draws++;
+                statusTextElement.textContent = 'بازی مساوی شد!';
+                statusTextElement.className = 'status-text draw visible';
+                addChatMessage(currentGameMode === 'pvai' ? getRandomTaunt('draw') : "بازی مساوی شد!", 'system');
+                title = 'مساوی!';
+                message = 'در این گستره فضایی، هیچکدام پیروز نشدند. دوباره تلاش کنیم؟';
+                soundToPlay = 'draw';
+            } else if (winner) {
+                highlightWinningCells(winningCombination, winner);
+                let winnerNameDisplay; // For display in messages
+                if (winner === player1Symbol) {
+                    scores.player1++;
+                    winnerNameDisplay = currentGameMode === 'pvai' ? 'شما' : 'بازیکن ۱';
+                    soundToPlay = 'win';
+                } else { // winner === player2Symbol (AI or Player 2)
+                    scores.player2++;
+                    winnerNameDisplay = currentGameMode === 'pvai' ? 'هوش مصنوعی' : 'بازیکن ۲';
+                    soundToPlay = 'lose'; // Player 1 loses
+                }
+                statusTextElement.textContent = `${winnerNameDisplay} (${winner}) برنده شدید!`;
+                statusTextElement.className = `status-text win-${winner.toLowerCase()} visible`;
+                
+                if (currentGameMode === 'pvai') {
+                    addChatMessage(winner === player1Symbol ? getRandomTaunt('playerWin') : getRandomTaunt('aiWin'), winner === player1Symbol ? 'player-info' : 'ai');
+                } else {
+                     addChatMessage(`${winnerNameDisplay} (${winner}) برنده شد!`, 'system');
+                }
+                title = `${winnerNameDisplay} فاتح این نبرد شد!`;
+                message = winner === player1Symbol ? 'عالی بود! کهکشان از آن شماست.' : (currentGameMode === 'pvai' ? 'هوش مصنوعی این بار پیروز شد.' : 'بازیکن ۲ این دور را برد.');
+            }
+            
+            playSoundEffect(soundToPlay);
+            updateScoreboard();
+            
             setTimeout(() => {
-                container.style.transition = 'opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
-                container.style.opacity = '1'; container.style.transform = 'translateY(0) scale(1)';
-            }, 50);
-        });
+                modalTitleElement.textContent = title;
+                modalMessageElement.textContent = message;
+                gameOverModal.style.display = 'flex';
+            }, winningCombination ? 900 : 200);
+        }
+        
+        modalRestartButton.addEventListener('click', () => { playSoundEffect('click'); gameOverModal.style.display = 'none'; resetGame(); });
+        window.onclick = (event) => { if (event.target == gameOverModal) { playSoundEffect('click'); gameOverModal.style.display = "none"; resetGame(); }};
 
-        console.log("نسخه ۳: مدیریت درخواست‌ها، نوار پیشرفت و بهبودهای بیشتر اعمال شد.");
+        function findWinningMove(board, symbol) { // Renamed parameters for clarity
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === '') {
+                    board[i] = symbol; // Test move
+                    if (checkWin(symbol, board).isWin) {
+                        board[i] = ''; return i; // Found winning move
+                    }
+                    board[i] = ''; // Undo test move
+                }
+            }
+            return -1; // No immediate winning move
+        }
+        
+        // AI Core Logic - AI is always player2Symbol
+        function aiMove() {
+            if (!gameActive || currentGameMode !== 'pvai' || currentPlayer !== player2Symbol) {
+                // console.log("AI move skipped. Game Active:", gameActive, "Mode:", currentGameMode, "Current Player:", currentPlayer, "AI Symbol:", player2Symbol);
+                return;
+            }
+
+            addChatMessage(getRandomTaunt('thinking'), 'ai');
+            let move = -1; // Initialize move to an invalid index
+            currentDifficulty = difficultySelect.value;
+
+            // 1. AI checks if it can win
+            let aiWinningMove = findWinningMove([...boardState], player2Symbol); // Use a copy of boardState for testing
+            if (aiWinningMove !== -1) {
+                move = aiWinningMove;
+                // console.log("AI Found Winning Move:", move);
+            } else {
+                // 2. AI checks if player (player1Symbol) can win, and blocks
+                let playerBlockingMove = findWinningMove([...boardState], player1Symbol);
+                if (playerBlockingMove !== -1) {
+                    move = playerBlockingMove;
+                    // console.log("AI Found Blocking Move:", move);
+                    setTimeout(() => addChatMessage(getSpecificTaunt('aiBlockedWin'), 'ai'), 100);
+                } else {
+                    // 3. Difficulty-based move
+                    // console.log("AI: No immediate win or block. Difficulty:", currentDifficulty);
+                    if (currentDifficulty === 'easy') {
+                        move = getRandomEmptyCell();
+                    } else if (currentDifficulty === 'medium') {
+                        move = getMediumAiMoveInternal(); // This function should return a valid move or -1/undefined
+                    } else { // hard
+                        move = getBestMoveMinimax(player2Symbol, player1Symbol);
+                    }
+                    // console.log("AI selected move by difficulty:", move);
+                }
+            }
+            
+            if (move !== -1 && move !== undefined && boardState[move] === '') { // Ensure move is valid and cell is empty
+                 setTimeout(() => {
+                    playSoundEffect('move');
+                    makeMove(move, player2Symbol); // AI makes its move
+                    if (gameActive) { // Check if game still active after AI's move
+                        currentPlayer = player1Symbol; // Switch back to player
+                        updateStatus();
+                    }
+                }, 700 + Math.random() * 700);
+            } else if (gameActive) { // No valid move found, but game is active
+                // This might happen if all cells are full and it's a draw, or an error in AI logic
+                // console.warn("AI could not find a valid move. Current board:", boardState, "Calculated move:", move);
+                if (boardState.every(cell => cell !== '')) { // If board is full, declare draw
+                    endGame(true);
+                } else {
+                    // Fallback: if AI logic somehow failed to produce a move but board is not full, try random
+                    let randomFallback = getRandomEmptyCell();
+                    if (randomFallback !== undefined) {
+                        // console.log("AI using random fallback move:", randomFallback);
+                        setTimeout(() => {
+                            playSoundEffect('move');
+                            makeMove(randomFallback, player2Symbol);
+                            if (gameActive) {
+                                currentPlayer = player1Symbol;
+                                updateStatus();
+                            }
+                        }, 700);
+                    } else {
+                        // console.error("AI critical failure: No move possible on non-full board.");
+                        // This state should ideally not be reached.
+                    }
+                }
+            }
+        }
+
+
+        function getRandomEmptyCell() {
+            const emptyCells = [];
+            boardState.forEach((cell, index) => {
+                if (cell === '') emptyCells.push(index);
+            });
+            if (emptyCells.length > 0) {
+                return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            }
+            return undefined; // No empty cells
+        }
+
+        function getMediumAiMoveInternal() {
+            // Win/Block logic is now primarily handled in aiMove's main flow.
+            // This function provides the "next best" strategic moves for medium.
+            if (boardState[4] === '') return 4; // Center
+            const corners = [0, 2, 6, 8].filter(idx => boardState[idx] === '');
+            if (corners.length > 0) return corners[Math.floor(Math.random() * corners.length)];
+            const sides = [1, 3, 5, 7].filter(idx => boardState[idx] === '');
+            if (sides.length > 0) return sides[Math.floor(Math.random() * sides.length)];
+            return getRandomEmptyCell(); // Fallback
+        }
+
+        function getBestMoveMinimax(aiSymbol, humanSymbol) { // Corrected parameters
+            let bestScore = -Infinity;
+            let move = -1; // Default to -1 if no move found (shouldn't happen on non-full board)
+            
+            const emptyCellsIndices = [];
+            boardState.forEach((cell, index) => {
+                if (cell === '') emptyCellsIndices.push(index);
+            });
+
+            if (emptyCellsIndices.length === 0) return -1; // Should be caught by draw condition earlier
+
+            for (const i of emptyCellsIndices) {
+                // No need to check boardState[i] === '' again, already filtered
+                boardState[i] = aiSymbol; // AI's move
+                let score = minimax([...boardState], 0, false, aiSymbol, humanSymbol); // Pass a copy of boardState
+                boardState[i] = ''; // Undo move
+                if (score > bestScore) {
+                    bestScore = score;
+                    move = i;
+                }
+            }
+            // If move is still -1 (e.g., all moves lead to same score, or only one move left), pick a random valid one
+            if (move === -1 && emptyCellsIndices.length > 0) {
+                // If multiple moves have the same best score, this will pick the first one found.
+                // To make it less predictable, could collect all moves with bestScore and pick randomly.
+                // For now, picking the first one is fine.
+                return emptyCellsIndices[0]; // Or a random one from emptyCellsIndices if no move improves score
+            }
+            return move;
+        }
+
+
+        function minimax(currentBoard, depth, isMaximizingPlayerTurn, aiSymbol, humanSymbol) {
+            // Terminal states
+            if (checkWin(aiSymbol, currentBoard).isWin) return 10 - depth;
+            if (checkWin(humanSymbol, currentBoard).isWin) return depth - 10;
+            if (currentBoard.every(cell => cell !== '')) return 0; // Draw
+
+            const emptyCellsIndices = [];
+            currentBoard.forEach((cell, index) => {
+                if (cell === '') emptyCellsIndices.push(index);
+            });
+
+            if (isMaximizingPlayerTurn) { // AI's turn (Maximizer)
+                let maxEval = -Infinity;
+                for (const i of emptyCellsIndices) {
+                    currentBoard[i] = aiSymbol;
+                    let evalScore = minimax([...currentBoard], depth + 1, false, aiSymbol, humanSymbol);
+                    currentBoard[i] = ''; // Backtrack
+                    maxEval = Math.max(maxEval, evalScore);
+                }
+                return maxEval;
+            } else { // Human's turn (Minimizer)
+                let minEval = Infinity;
+                for (const i of emptyCellsIndices) {
+                    currentBoard[i] = humanSymbol;
+                    let evalScore = minimax([...currentBoard], depth + 1, true, aiSymbol, humanSymbol);
+                    currentBoard[i] = ''; // Backtrack
+                    minEval = Math.min(minEval, evalScore);
+                }
+                return minEval;
+            }
+        }
+        
+        // --- UI Updates & Resets ---
+        function updateScoreboard() {
+            player1ScoreElement.textContent = scores.player1;
+            player2ScoreElement.textContent = scores.player2;
+            drawScoreElement.textContent = scores.draws;
+            const p1Name = currentGameMode === 'pvai' ? 'شما' : 'بازیکن ۱';
+            player1NameScoreElement.textContent = `${p1Name} (${player1Symbol})`;
+            const p2Name = currentGameMode === 'pvai' ? 'هوش مصنوعی' : 'بازیکن ۲';
+            player2NameScoreElement.textContent = `${p2Name} (${player2Symbol})`;
+        }
+
+        function updateStatus() {
+            let statusMsg = '';
+            statusTextElement.classList.remove('visible');
+
+            setTimeout(() => {
+                if (currentGameMode === 'pvai') {
+                    statusMsg = currentPlayer === player1Symbol ? `نوبت شما (${player1Symbol})` : `نوبت هوش مصنوعی (${player2Symbol})`;
+                    difficultySelect.disabled = false;
+                    hintButton.style.display = 'block';
+                    chatAreaElement.style.display = 'block';
+                } else { // pvp
+                    statusMsg = currentPlayer === player1Symbol ? `نوبت بازیکن ۱ (${player1Symbol})` : `نوبت بازیکن ۲ (${player2Symbol})`;
+                    difficultySelect.disabled = true;
+                    hintButton.style.display = 'none';
+                    chatAreaElement.style.display = 'none';
+                }
+                statusTextElement.textContent = statusMsg;
+                statusTextElement.className = 'status-text visible';
+            }, 150);
+        }
+        
+        function resetGame() {
+            playSoundEffect('click');
+            boardState.fill('');
+            gameActive = true;
+            player1Symbol = player1SymbolSelect.value;
+            player2Symbol = player1Symbol === 'X' ? 'O' : 'X';
+            currentPlayer = player1Symbol; // Player 1 (human) always starts
+            hintButton.disabled = false;
+            clearHint();
+
+            createBoard(); // This will also correctly size and position the canvas
+            updateStatus();
+            updateScoreboard();
+            
+            chatMessagesElement.innerHTML = '';
+            if (currentGameMode === 'pvai') {
+                addChatMessage(getStartTaunt(), 'ai');
+            } else {
+                addChatMessage(getStartTaunt(), 'system');
+            }
+            gameOverModal.style.display = 'none';
+        }
+        
+        // --- Hint Logic ---
+        function showHint() {
+            if (!gameActive || currentGameMode !== 'pvai' || currentPlayer !== player1Symbol) return;
+            if (currentDifficulty === 'hard') {
+                addChatMessage("در سطح سخت راهنمایی نداریم، به هوش خودت تکیه کن!", 'system');
+                playSoundEffect('click');
+                return;
+            }
+
+            playSoundEffect('hint');
+            addChatMessage(getSpecificTaunt('hintUsed'), 'ai');
+            clearHint();
+
+            let hintMove = -1;
+            // 1. Can player win?
+            hintMove = findWinningMove([...boardState], player1Symbol);
+            // 2. Can AI win (block it)?
+            if (hintMove === -1) hintMove = findWinningMove([...boardState], player2Symbol);
+            // 3. Take center?
+            if (hintMove === -1 && boardState[4] === '') hintMove = 4;
+            // 4. Take a random strategic spot (corner then side)
+            if (hintMove === -1) {
+                const strategicSpots = [0,2,6,8,1,3,5,7].filter(idx => boardState[idx] === '');
+                if (strategicSpots.length > 0) hintMove = strategicSpots[Math.floor(Math.random() * strategicSpots.length)]; // Random from strategic
+            }
+            // 5. Random empty if all else fails
+            if (hintMove === -1 || hintMove === undefined) hintMove = getRandomEmptyCell();
+
+
+            if (hintMove !== -1 && hintMove !== undefined && boardState[hintMove] === '') {
+                hintCellIndex = hintMove;
+                boardElement.children[hintCellIndex]?.classList.add('hint-cell');
+                setTimeout(clearHint, 2500);
+            } else {
+                // console.log("Hint could not find a valid cell. Move:", hintMove);
+            }
+        }
+
+        function clearHint() {
+            if (hintCellIndex !== -1 && boardElement.children[hintCellIndex]) {
+                boardElement.children[hintCellIndex].classList.remove('hint-cell');
+                hintCellIndex = -1;
+            }
+        }
+        
+        // Event Listeners
+        resetButton.addEventListener('click', resetGame);
+        difficultySelect.addEventListener('change', (event) => { playSoundEffect('click'); currentDifficulty = event.target.value; addChatMessage(`سطح سختی به ${event.target.options[event.target.selectedIndex].text} تغییر کرد.`, 'system'); });
+        gameModeSelect.addEventListener('change', (event) => { playSoundEffect('click'); currentGameMode = event.target.value; scores = { player1: 0, player2: 0, draws: 0 }; resetGame(); });
+        player1SymbolSelect.addEventListener('change', () => { playSoundEffect('click'); resetGame(); });
+        
+        soundToggleButton.addEventListener('click', () => {
+            soundEffectsEnabled = !soundEffectsEnabled;
+            soundToggleButton.textContent = `🔊 افکت: ${soundEffectsEnabled ? 'روشن' : 'خاموش'}`;
+            soundToggleButton.classList.toggle('muted', !soundEffectsEnabled);
+            playSoundEffect('click');
+        });
+        musicToggleButton.addEventListener('click', toggleMusic);
+        hintButton.addEventListener('click', showHint);
+
+        // Initial setup
+        resetGame();
+        updateScoreboard();
+        
+        window.addEventListener('resize', () => {
+            // Re-create board on resize to adjust canvas and cell sizes correctly
+            // This will reset the visual state of the board.
+            createBoard();
+            // If a game was won and line was drawn, it needs to be redrawn based on new coordinates
+            if (!gameActive) {
+                let winnerSymbol = null;
+                let winCombination = null;
+
+                const p1WinInfo = checkWin(player1Symbol);
+                if (p1WinInfo.isWin) {
+                    winnerSymbol = player1Symbol;
+                    winCombination = p1WinInfo.combination;
+                } else {
+                    const p2WinInfo = checkWin(player2Symbol);
+                    if (p2WinInfo.isWin) {
+                        winnerSymbol = player2Symbol;
+                        winCombination = p2WinInfo.combination;
+                    }
+                }
+                
+                if (winnerSymbol && winCombination) {
+                    // Redraw cells with symbols before drawing line
+                    boardState.forEach((symbol, index) => {
+                        if (symbol && boardElement.children[index]) {
+                            boardElement.children[index].textContent = symbol;
+                            boardElement.children[index].classList.add(symbol.toLowerCase(), 'occupied');
+                        }
+                    });
+                    // Highlight winning cells again if needed
+                     winCombination.forEach(index => {
+                        boardElement.children[index]?.classList.add('win-animation');
+                    });
+                    drawWinningLine(winCombination, winnerSymbol);
+                }
+            }
+        });
+         // Initial call to size canvas correctly after elements are rendered
+        // Use a small timeout to ensure DOM is fully ready for getBoundingClientRect
+        setTimeout(createBoard, 100);
+
 
     </script>
 </body>
