@@ -4,117 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>چت روم صوتی عمومی</title>
-
-    <!-- CSS یکپارچه شده در فایل HTML -->
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
-        }
-        .container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            width: 90%;
-        }
-        h1 {
-            color: #1a73e8;
-            margin-top: 0;
-        }
-        p {
-            line-height: 1.6;
-        }
-        .buttons {
-            margin: 20px 0;
-        }
-        button {
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            margin: 0 10px;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-        button:hover:not(:disabled) {
-            background-color: #1558b8;
-            transform: translateY(-2px);
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        #hangupBtn {
-            background-color: #d93025;
-        }
-        #hangupBtn:hover:not(:disabled) {
-            background-color: #b5281e;
-        }
-        #status {
-            margin-top: 20px;
-            font-weight: bold;
-            color: #555;
-            min-height: 24px;
-        }
-        #remote-audios video,
-        #remote-audios audio {
-            /* تگ‌های صوتی را مخفی می‌کنیم چون نیازی به دیدن کنترلر آن‌ها نیست */
-            display: none;
-        }
-        .user-count {
-            background-color: #e8f0fe;
-            color: #1a73e8;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: bold;
-            display: inline-block;
-            margin-top: 15px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
+        .container { background-color: #fff; padding: 30px 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); max-width: 500px; width: 90%; }
+        h1 { color: #1a73e8; margin-top: 0; }
+        p { line-height: 1.6; }
+        .buttons { margin: 20px 0; }
+        button { background-color: #1a73e8; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 0 10px; transition: background-color 0.3s, transform 0.2s; }
+        button:hover:not(:disabled) { background-color: #1558b8; transform: translateY(-2px); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
+        #hangupBtn { background-color: #d93025; }
+        #hangupBtn:hover:not(:disabled) { background-color: #b5281e; }
+        #status { margin-top: 20px; font-weight: bold; color: #555; min-height: 24px; }
+        #remote-audios video, #remote-audios audio { display: none; }
+        .lobby { margin-top: 25px; text-align: right; }
+        .lobby h3 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        #user-list { list-style-type: none; padding: 0; }
+        #user-list li { background-color: #e8f0fe; color: #1a73e8; padding: 8px 12px; border-radius: 20px; margin-bottom: 8px; display: inline-block; font-weight: 500; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>چت روم صوتی عمومی</h1>
-        <p>با کلیک روی دکمه "ورود به چت" میکروفون شما فعال شده و به اتاق عمومی متصل می‌شوید. هر کاربر جدیدی که وارد شود، به طور خودکار به مکالمه اضافه خواهد شد.</p>
+        <p>با کلیک روی دکمه "ورود به چت"، به اتاق عمومی متصل شوید. لیست کاربران حاضر در زیر نمایش داده می‌شود.</p>
         
         <div class="buttons">
             <button id="joinBtn">ورود به چت</button>
-            <button id="hangupBtn" disabled>خروج و قطع تماس</button>
+            <button id="hangupBtn" disabled>خروج</button>
         </div>
 
         <div id="status">در انتظار اتصال...</div>
-        <div id="user-count-container"></div>
         
-        <!-- این قسمت برای نگهداری تگ‌های صوتی کاربران دیگر است -->
+        <div class="lobby">
+            <h3>کاربران حاضر در لابی</h3>
+            <ul id="user-list">
+                <!-- لیست کاربران اینجا قرار می‌گیرد -->
+            </ul>
+        </div>
+        
         <div id="remote-audios"></div>
     </div>
 
-    <!-- JavaScript یکپارچه شده در فایل HTML -->
     <script type="module">
-        // ---------------------------------------------------------------------
-        // 1. راه‌اندازی و تنظیم FIREBASE
-        // ---------------------------------------------------------------------
+        // 1. راه‌اندازی FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { 
-            getFirestore, collection, doc, addDoc, onSnapshot, 
-            query, where, deleteDoc, getDocs 
-        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, query, where, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
-        // نکته: این اطلاعات حساس نیستند و می‌توانند در سمت کلاینت باشند.
         const firebaseConfig = {
             apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
             authDomain: "voic-acfa3.firebaseapp.com",
@@ -124,104 +60,68 @@
             appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd",
             measurementId: "G-1VQXZKZ6T9"
         };
-
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // ---------------------------------------------------------------------
         // 2. متغیرهای سراسری و تنظیمات WEBRTC
-        // ---------------------------------------------------------------------
-        
-        // ارجاع به المان‌های HTML
         const joinBtn = document.getElementById('joinBtn');
         const hangupBtn = document.getElementById('hangupBtn');
         const statusDiv = document.getElementById('status');
         const remoteAudiosContainer = document.getElementById('remote-audios');
-        const userCountContainer = document.getElementById('user-count-container');
+        const userList = document.getElementById('user-list');
 
-        // تنظیمات سرورهای STUN برای پیدا کردن مسیر بین کاربران
-        const servers = {
-            iceServers: [
-                { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
-            ],
-            iceCandidatePoolSize: 10,
-        };
+        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
 
-        // متغیرهای وضعیت برنامه
-        let localStream;
-        let localId; // شناسه منحصر به فرد این کاربر در جلسه فعلی
-        const peerConnections = {}; // آبجکتی برای نگهداری تمام ارتباطات همتا به همتا
-        let userDocRef; // ارجاع به داکیومنت کاربر فعلی در Firestore برای حذف در زمان خروج
-        let firestoreUnsubscribes = []; // آرایه‌ای برای نگهداری توابع لغو اشتراک Firestore
+        let localStream, localId, userDocRef;
+        const peerConnections = {};
+        let firestoreUnsubscribes = [];
 
-        // ---------------------------------------------------------------------
-        // 3. منطق اصلی برنامه (توابع)
-        // ---------------------------------------------------------------------
-
-        /**
-         * تابع اصلی برای شروع فرآیند: ورود به اتاق
-         */
+        // 3. منطق اصلی برنامه
         const joinRoom = async () => {
-            // به‌روزرسانی UI
             joinBtn.disabled = true;
-            hangupBtn.disabled = false;
             statusDiv.textContent = 'در حال درخواست دسترسی به میکروفون...';
 
             try {
-                // دریافت استریم صوتی از میکروفون کاربر
+                // مرحله کلیدی: بلافاصله درخواست دسترسی به میکروفون
                 localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-                statusDiv.textContent = 'به اتاق متصل شدید! منتظر کاربران دیگر...';
+                statusDiv.textContent = 'دسترسی موفق! در حال اتصال به اتاق...';
+                hangupBtn.disabled = false;
                 
-                // ایجاد یک شناسه منحصر به فرد برای این کاربر
-                localId = Math.random().toString(36).substring(2, 15);
+                localId = Math.random().toString(36).substring(2, 10); // شناسه کوتاه‌تر و خواناتر
+                userDocRef = await addDoc(collection(db, 'users'), { id: localId, name: `کاربر ${localId}` });
 
-                // اضافه کردن کاربر به کالکشن `users` در Firestore
-                userDocRef = await addDoc(collection(db, 'users'), { id: localId, joinedAt: Date.now() });
-
-                // گوش دادن به تغییرات در کالکشن کاربران
                 setupUserListener();
-                
-                // گوش دادن به سیگنال‌های دریافتی از دیگران
                 setupSignalListener();
 
             } catch (error) {
                 console.error("خطا در دسترسی به میکروفون: ", error);
-                statusDiv.textContent = 'امکان دسترسی به میکروفون وجود ندارد. لطفا مجوز لازم را بدهید.';
-                hangup(); // بازگرداندن به حالت اولیه
+                statusDiv.textContent = 'امکان دسترسی به میکروفون وجود ندارد. لطفا مجوز را بدهید و دوباره تلاش کنید.';
+                joinBtn.disabled = false;
             }
         };
-
-        /**
-         * گوش دادن به ورود و خروج کاربران دیگر
-         */
+        
         function setupUserListener() {
-            const usersCollection = collection(db, 'users');
-            const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
-                // نمایش تعداد کاربران آنلاین
-                const userCount = snapshot.size;
-                userCountContainer.innerHTML = `<span class="user-count">${userCount} کاربر آنلاین</span>`;
+            const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
+                // پاک کردن لیست فعلی
+                userList.innerHTML = '';
+                // بازسازی لیست کاربران
+                snapshot.forEach(doc => {
+                    const user = doc.data();
+                    const userElement = document.createElement('li');
+                    userElement.textContent = user.name + (user.id === localId ? ' (شما)' : '');
+                    userList.appendChild(userElement);
+                });
 
+                // مدیریت اتصال به کاربران جدید
                 snapshot.docChanges().forEach(async (change) => {
-                    const remoteId = change.doc.data().id;
-
-                    if (change.type === 'added' && remoteId !== localId) {
-                        console.log(`کاربر جدید (${remoteId}) وارد شد. ایجاد ارتباط...`);
-                        // برای هر کاربر جدیدی که وارد می‌شود، یک ارتباط جدید ایجاد می‌کنیم (ما به عنوان آغازگر)
-                        createPeerConnection(remoteId, true);
+                    const remoteUser = change.doc.data();
+                    if (change.type === 'added' && remoteUser.id !== localId) {
+                        createPeerConnection(remoteUser.id, true);
                     }
-
                     if (change.type === 'removed') {
-                        const removedId = change.doc.data().id;
-                        console.log(`کاربر (${removedId}) خارج شد. قطع ارتباط...`);
-                        // اگر کاربری خارج شد، ارتباط با او را قطع و منابع را پاک می‌کنیم
-                        if (peerConnections[removedId]) {
-                            peerConnections[removedId].close();
-                            delete peerConnections[removedId];
-                            const audioEl = document.getElementById(`audio-${removedId}`);
-                            if (audioEl) {
-                                audioEl.remove();
-                            }
+                        if (peerConnections[remoteUser.id]) {
+                            peerConnections[remoteUser.id].close();
+                            delete peerConnections[remoteUser.id];
                         }
                     }
                 });
@@ -229,45 +129,28 @@
             firestoreUnsubscribes.push(unsubscribe);
         }
 
-        /**
-         * گوش دادن به سیگنال‌های WebRTC (offer, answer, ice-candidate)
-         */
         function setupSignalListener() {
-            const signalsCollection = collection(db, 'signals');
-            // فقط سیگنال‌هایی را دریافت می‌کنیم که برای ما ارسال شده‌اند
-            const q = query(signalsCollection, where("to", "==", localId));
-            
+            const q = query(collection(db, 'signals'), where("to", "==", localId));
             const unsubscribe = onSnapshot(q, (snapshot) => {
                 snapshot.docChanges().forEach(async (change) => {
                     if (change.type === 'added') {
-                        const signal = change.doc.data();
-                        
-                        // پس از خواندن سیگنال، آن را حذف می‌کنیم تا دیتابیس شلوغ نشود
+                        const { from, sdp, candidate } = change.doc.data();
                         await deleteDoc(doc(db, 'signals', change.doc.id));
 
-                        const remoteId = signal.from;
-
-                        // اگر هنوز ارتباطی با این کاربر نداریم، ایجادش می‌کنیم
-                        if (!peerConnections[remoteId]) {
-                            createPeerConnection(remoteId, false); // این بار ما آغازگر نیستیم
+                        if (!peerConnections[from]) {
+                            createPeerConnection(from, false);
                         }
 
-                        const pc = peerConnections[remoteId];
-
-                        if (signal.sdp) { // اگر از نوع offer یا answer باشد
-                            try {
-                                await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-                                if (pc.remoteDescription.type === 'offer') {
-                                    const answer = await pc.createAnswer();
-                                    await pc.setLocalDescription(answer);
-                                    sendSignal(remoteId, { sdp: pc.localDescription });
-                                }
-                            } catch (e) { console.error("Error setting remote description", e); }
-
-                        } else if (signal.candidate) { // اگر از نوع ice-candidate باشد
-                             try {
-                                await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
-                            } catch (e) { console.error('Error adding received ice candidate', e); }
+                        const pc = peerConnections[from];
+                        if (sdp) {
+                            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                            if (pc.remoteDescription.type === 'offer') {
+                                const answer = await pc.createAnswer();
+                                await pc.setLocalDescription(answer);
+                                sendSignal(from, { sdp: pc.localDescription });
+                            }
+                        } else if (candidate) {
+                            await pc.addIceCandidate(new RTCIceCandidate(candidate));
                         }
                     }
                 });
@@ -275,109 +158,52 @@
             firestoreUnsubscribes.push(unsubscribe);
         }
 
-        /**
-         * ایجاد یک ارتباط همتا به همتا (PeerConnection)
-         * @param {string} remoteId - شناسه کاربر دیگر
-         * @param {boolean} isInitiator - آیا ما آغازگر این ارتباط هستیم؟
-         */
         function createPeerConnection(remoteId, isInitiator) {
-            console.log(`ایجاد PeerConnection برای ${remoteId}...`);
             const pc = new RTCPeerConnection(servers);
             peerConnections[remoteId] = pc;
 
-            // استریم صوتی خودمان را به این ارتباط اضافه می‌کنیم تا برای طرف مقابل ارسال شود
-            localStream.getTracks().forEach(track => {
-                pc.addTrack(track, localStream);
-            });
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
-            // وقتی استریم صوتی از طرف مقابل دریافت شد
             pc.ontrack = event => {
                 let audioEl = document.getElementById(`audio-${remoteId}`);
                 if (!audioEl) {
                     audioEl = document.createElement('audio');
                     audioEl.id = `audio-${remoteId}`;
-                    audioEl.autoplay = true;
+                    audioEl.autoplay = true; // این حالا باید کار کند چون در نتیجه یک کلیک اتفاق افتاده
+                    audioEl.playsInline = true;
                     remoteAudiosContainer.appendChild(audioEl);
                 }
                 audioEl.srcObject = event.streams[0];
             };
 
-            // وقتی یک ICE candidate توسط مرورگر ما تولید می‌شود
-            pc.onicecandidate = event => {
-                if (event.candidate) {
-                    sendSignal(remoteId, { candidate: event.candidate.toJSON() });
-                }
-            };
+            pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { candidate: e.candidate.toJSON() });
             
-            // اگر ما آغازگر ارتباط هستیم، یک offer می‌سازیم و ارسال می‌کنیم
             if (isInitiator) {
-                pc.createOffer()
-                    .then(offer => pc.setLocalDescription(offer))
-                    .then(() => {
-                        sendSignal(remoteId, { sdp: pc.localDescription });
-                    })
-                    .catch(e => console.error("Error creating offer", e));
+                pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => sendSignal(remoteId, { sdp: pc.localDescription }));
             }
         }
 
-        /**
-         * ارسال سیگنال به کاربر دیگر از طریق Firestore
-         * @param {string} toId - شناسه گیرنده
-         * @param {object} data - داده سیگنال (sdp یا candidate)
-         */
         async function sendSignal(toId, data) {
-            const signalData = { to: toId, from: localId, ...data };
-            await addDoc(collection(db, 'signals'), signalData);
+            await addDoc(collection(db, 'signals'), { to: toId, from: localId, ...data });
         }
 
-        /**
-         * تابع خروج از اتاق و پاک‌سازی منابع
-         */
         const hangup = async () => {
-            // قطع تمام ارتباطات همتا به همتا
             Object.values(peerConnections).forEach(pc => pc.close());
-            
-            // توقف ترک‌های میکروفون
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-
-            // پاک کردن المان‌های صوتی از صفحه
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
             remoteAudiosContainer.innerHTML = '';
-
-            // لغو اشتراک از شنوندگان Firestore برای جلوگیری از نشت حافظه
-            firestoreUnsubscribes.forEach(unsubscribe => unsubscribe());
+            userList.innerHTML = '';
+            firestoreUnsubscribes.forEach(unsub => unsub());
             firestoreUnsubscribes = [];
-
-            // حذف کاربر از کالکشن `users` در Firestore
-            if (userDocRef) {
-                await deleteDoc(userDocRef);
-            }
-            // پاکسازی سیگنال های باقی مانده
-            const q = query(collection(db, 'signals'), where("from", "==", localId));
-            const snapshot = await getDocs(q);
-            snapshot.forEach(doc => deleteDoc(doc.ref));
-
-            // بازگرداندن UI به حالت اولیه
+            if (userDocRef) await deleteDoc(userDocRef);
+            
             joinBtn.disabled = false;
             hangupBtn.disabled = true;
             statusDiv.textContent = 'شما از اتاق خارج شدید.';
-            userCountContainer.innerHTML = '';
         };
 
-        // ---------------------------------------------------------------------
-        // 4. اتصال رویدادها به توابع
-        // ---------------------------------------------------------------------
         joinBtn.onclick = joinRoom;
         hangupBtn.onclick = hangup;
-
-        // اگر کاربر صفحه را ببندد یا رفرش کند، به طور خودکار خارج شود
-        window.addEventListener('beforeunload', (e) => {
-            if (localStream) { // فقط اگر در تماس باشد
-                 hangup();
-            }
-        });
-
+        window.addEventListener('beforeunload', () => localStream && hangup());
     </script>
 </body>
 </html>
