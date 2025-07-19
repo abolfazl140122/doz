@@ -1,278 +1,364 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl"> <!-- تنظیم جهت‌دهی به راست به چپ برای زبان فارسی -->
+<html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>گفتگوی زنده با فایربیس</title>
-  <style>
-    /* CSS برای استایل‌دهی ظاهر چت */
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f2f5;
-      display: flex;
-      flex-direction: column;
-      height: 100vh; /* ارتفاع کامل صفحه */
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>چت بلادرنگ با Firebase (فقط HTML)</title>
 
-    /* کانتینر اصلی چت برای اسکرول‌پذیری */
-    #chat-container {
-      flex-grow: 1; /* اجازه می‌دهد تا فضای باقی‌مانده را اشغال کند */
-      overflow-y: auto; /* اسکرول عمودی در صورت نیاز */
-      padding: 1rem;
-      display: flex; /* برای چسباندن پیام‌ها به پایین */
-      flex-direction: column-reverse; /* پیام‌های جدید از پایین اضافه شوند */
-    }
+    <style>
+        /* CSS Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            direction: rtl; /* Set overall direction for RTL */
+        }
 
-    /* لیست پیام‌ها */
-    #messages {
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
-      flex-grow: 1; /* اجازه می‌دهد پیام‌ها از بالا به پایین پر شوند */
-      display: flex;
-      flex-direction: column; /* پیام‌ها به ترتیب در ستون قرار گیرند */
-      justify-content: flex-end; /* پیام‌ها از پایین شروع شوند */
-    }
+        .chat-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
 
-    /* استایل کلی برای هر پیام */
-    #messages > li {
-      background: #e4e6eb; /* رنگ پس‌زمینه پیام‌های دیگران */
-      padding: 0.75rem 1rem;
-      border-radius: 18px; /* گوشه‌های گرد */
-      margin-bottom: 0.5rem;
-      max-width: 80%; /* حداکثر عرض پیام */
-      word-wrap: break-word; /* شکستن کلمات طولانی */
-      align-self: flex-start; /* پیام‌های دیگران در سمت چپ */
-      direction: rtl; /* متن پیام از راست به چپ */
-      text-align: right; /* تراز متن به راست */
-    }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            padding: 20px;
+            margin: 0;
+            background-color: #f7f7f7;
+            border-bottom: 1px solid #eee;
+        }
 
-    /* استایل برای پیام‌های خودم */
-    #messages > li.mine {
-      background: #007bff; /* رنگ آبی برای پیام‌های من */
-      color: white; /* متن سفید */
-      align-self: flex-end; /* پیام‌های من در سمت راست */
-      text-align: right;
-    }
+        #username-section {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px; /* Adjust as needed */
+        }
 
-    /* اطلاعات فرستنده و زمان */
-    .message-info {
-      font-size: 0.75em;
-      color: #65676b;
-      margin-top: 0.2rem;
-      display: block;
-      direction: rtl; /* جهت متن */
-      text-align: right;
-    }
+        #username-input {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            text-align: center;
+        }
 
-    /* اطلاعات فرستنده در پیام‌های خودم */
-    li.mine .message-info {
-      color: #d1e2ff; /* رنگ روشن‌تر برای پیام‌های من */
-    }
+        #set-username-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
 
-    /* کانتینر فرم ارسال پیام */
-    #form-container {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 0.5rem;
-      position: sticky; /* برای چسبیدن به پایین */
-      bottom: 0;
-      left: 0;
-      right: 0;
-      display: flex;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* سایه در بالا */
-      align-items: center; /* تراز عمودی عناصر */
-      direction: rtl; /* جهت‌دهی از راست به چپ برای کل فرم */
-    }
+        #set-username-btn:hover {
+            background-color: #45a049;
+        }
 
-    /* فیلد ورودی نام کاربر */
-    #user-input {
-      border: 1px solid #ccc;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      margin-left: 0.5rem; /* فاصله از فرم اصلی */
-      width: 120px; /* عرض ثابت */
-      flex-shrink: 0; /* از جمع شدن جلوگیری می‌کند */
-      text-align: right;
-    }
-    #user-input:focus {
-      outline: none;
-      border-color: #007bff;
-    }
+        #chat-section {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 120px); /* Adjust height for full viewport */
+            max-height: 600px; /* Max height for messages area */
+            box-sizing: border-box;
+            padding-bottom: 0; /* No padding at bottom for form */
+        }
 
-    /* فرم ارسال پیام */
-    #form {
-      display: flex;
-      flex-grow: 1; /* اجازه می‌دهد فضای باقی‌مانده را پر کند */
-    }
+        #messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            border-bottom: 1px solid #eee;
+            background-color: #fbfbfb;
+            display: flex;
+            flex-direction: column; /* Stack messages vertically */
+        }
 
-    /* فیلد ورودی پیام */
-    #message-input {
-      border: 1px solid #ccc;
-      padding: 0.5rem 1rem;
-      flex-grow: 1;
-      border-radius: 20px;
-      margin-left: 0.5rem; /* فاصله از دکمه ارسال */
-      text-align: right;
-    }
-    #message-input:focus {
-      outline: none;
-      border-color: #007bff;
-    }
+        .message {
+            background-color: #e0e0e0;
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            word-wrap: break-word; /* Ensure long words break */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
 
-    /* دکمه ارسال */
-    #form > button {
-      background: #007bff;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      outline: none;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    #form > button:hover {
-      background: #0056b3;
-    }
-  </style>
+        .message.mine {
+            background-color: #4CAF50;
+            color: white;
+            align-self: flex-end; /* Align my messages to the right */
+            border-bottom-right-radius: 4px; /* Make corner sharper for my messages */
+            border-bottom-left-radius: 20px;
+        }
+        .message.other {
+            background-color: #f1f0f0;
+            color: #333;
+            align-self: flex-start; /* Align other messages to the left */
+            border-bottom-left-radius: 4px; /* Make corner sharper for other messages */
+            border-bottom-right-radius: 20px;
+        }
+        .message.system {
+            background-color: #fff3cd;
+            color: #856404;
+            text-align: center;
+            font-style: italic;
+            font-size: 0.9em;
+            align-self: center;
+            max-width: 90%;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            box-shadow: none;
+        }
+
+
+        .message strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .message.mine strong {
+             color: #e0e0e0; /* Lighter color for username in my messages */
+        }
+        .message .timestamp {
+            font-size: 0.7em;
+            color: #999;
+            margin-top: 5px;
+            text-align: left;
+            display: block;
+        }
+        .message.mine .timestamp {
+            color: #ddd;
+        }
+
+        form {
+            display: flex;
+            padding: 15px;
+            background-color: #fff;
+            border-top: 1px solid #eee;
+            gap: 10px;
+        }
+
+        #message-input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #message-input:focus {
+            border-color: #4CAF50;
+        }
+
+        form button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: #45a049;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
-  <!-- کانتینر نمایش پیام‌ها -->
-  <div id="chat-container">
-    <ul id="messages"></ul>
-  </div>
+    <div class="chat-container">
+        <h1>چت بلادرنگ</h1>
 
-  <!-- کانتینر فرم ورودی نام و پیام -->
-  <div id="form-container">
-    <input type="text" id="user-input" placeholder="نام شما" value="کاربر ناشناس" />
-    <form id="form" action="">
-      <input id="message-input" autocomplete="off" placeholder="پیام خود را تایپ کنید..." />
-      <button>ارسال</button>
-    </form>
-  </div>
+        <div id="username-section">
+            <input type="text" id="username-input" placeholder="نام کاربری خود را وارد کنید">
+            <button id="set-username-btn">ورود به چت</button>
+        </div>
 
-  <!-- Firebase SDKs و کد JavaScript -->
-  <script type="module">
-    // --- تنظیمات و ایمپورت‌های Firebase ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        <div id="chat-section" class="hidden">
+            <div id="messages">
+                <!-- پیام‌ها اینجا نمایش داده می‌شوند -->
+            </div>
+            <form id="form">
+                <input id="message-input" autocomplete="off" placeholder="پیام خود را بنویسید...">
+                <button type="submit">ارسال</button>
+            </form>
+        </div>
+    </div>
 
-    // تنظیمات پروژه Firebase شما (از کنسول Firebase کپی شده)
-    const firebaseConfig = {
-      apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
-      authDomain: "voic-acfa3.firebaseapp.com",
-      projectId: "voic-acfa3",
-      storageBucket: "voic-acfa3.firebasestorage.app",
-      messagingSenderId: "7797643208",
-      appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd",
-      measurementId: "G-1VQXZKZ6T9"
-    };
+    <script type="module">
+        // Firebase SDKs - Loaded directly from CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            serverTimestamp,
+            query,
+            orderBy,
+            onSnapshot
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // --- راه‌اندازی Firebase و Firestore ---
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app); // دریافت نمونه پایگاه داده Firestore
+        // Your web app's Firebase configuration
+        // !!! IMPORTANT: Replace with your actual Firebase project config !!!
+        const firebaseConfig = {
+            apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
+            authDomain: "voic-acfa3.firebaseapp.com",
+            projectId: "voic-acfa3",
+            storageBucket: "voic-acfa3.firebasestorage.app",
+            messagingSenderId: "7797643208",
+            appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd",
+            measurementId: "G-1VQXZKZ6T9"
+        };
 
-    // --- انتخاب عناصر DOM ---
-    const form = document.getElementById('form');
-    const messageInput = document.getElementById('message-input');
-    const userInput = document.getElementById('user-input');
-    const messagesUl = document.getElementById('messages');
-    const chatContainer = document.getElementById('chat-container'); // برای اسکرول صحیح
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app); // Optional: for Firebase Analytics
+        const db = getFirestore(app); // Get Firestore instance
 
-    // --- تنظیم نام کاربری پیش‌فرض یا از Local Storage ---
-    // این امکان را می‌دهد که نام کاربری حتی پس از رفرش صفحه حفظ شود.
-    const savedUserName = localStorage.getItem('chatUserName');
-    if (savedUserName) {
-        userInput.value = savedUserName;
-    } else {
-        userInput.value = "کاربر ناشناس"; // نام پیش‌فرض
-    }
+        // DOM elements
+        const usernameSection = document.getElementById('username-section');
+        const chatSection = document.getElementById('chat-section');
+        const usernameInput = document.getElementById('username-input');
+        const setUsernameBtn = document.getElementById('set-username-btn');
+        const form = document.getElementById('form');
+        const messageInput = document.getElementById('message-input');
+        const messagesDiv = document.getElementById('messages'); // Renamed to avoid conflict with 'messages' collection
 
-    // ذخیره نام کاربری هنگام تغییر آن
-    userInput.addEventListener('input', () => {
-        localStorage.setItem('chatUserName', userInput.value.trim());
-    });
+        let currentUser = null; // To store the current user's name
 
-    // --- ارجاع به کالکشن 'messages' در Firestore ---
-    const messagesCollection = collection(db, 'messages');
-
-    // --- ایجاد کوئری برای دریافت پیام‌ها و مرتب‌سازی بر اساس زمان ---
-    // orderBy('timestamp') باعث می‌شود پیام‌ها به ترتیب زمان ارسال نمایش داده شوند.
-    const q = query(messagesCollection, orderBy('timestamp', 'asc')); // 'asc' برای صعودی (قدیمی‌ترین اول)
-
-    // --- گوش دادن به تغییرات Real-time در Firestore ---
-    // onSnapshot هر بار که تغییری در کالکشن 'messages' اتفاق بیفتد (اضافه، حذف، ویرایش) اجرا می‌شود.
-    onSnapshot(q, (snapshot) => {
-      // پیام‌های موجود را پاک کرده و دوباره از اول رندر می‌کنیم (روش ساده برای این پروژه)
-      // در پروژه‌های بزرگتر، بهتر است فقط تغییرات را اعمال کنید تا کارایی بالاتر رود.
-      messagesUl.innerHTML = '';
-      snapshot.forEach((doc) => {
-        const message = doc.data(); // دریافت داده‌های سند
-        const item = document.createElement('li'); // ایجاد عنصر li برای هر پیام
-        
-        // ایجاد span برای نمایش اطلاعات فرستنده و زمان
-        const infoSpan = document.createElement('span');
-        infoSpan.classList.add('message-info');
-        let senderInfo = message.user || 'Unknown'; // اگر نام کاربر نبود، 'Unknown' نمایش دهد
-        
-        // فرمت‌دهی زمان
-        if (message.timestamp) {
-            const date = message.timestamp.toDate(); // تبدیل Timestamp فایربیس به شیء Date جاوااسکریپت
-            senderInfo += ` در ${date.toLocaleTimeString('fa-IR')} - ${date.toLocaleDateString('fa-IR')}`;
-        }
-        infoSpan.textContent = senderInfo;
-
-        item.appendChild(infoSpan); // اضافه کردن اطلاعات فرستنده
-        item.appendChild(document.createTextNode(message.text)); // اضافه کردن متن پیام
-
-        // استایل‌دهی پیام‌های خودم
-        if (message.user === userInput.value) {
-            item.classList.add('mine');
+        // Function to format timestamp
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
         }
 
-        messagesUl.appendChild(item); // اضافه کردن پیام به لیست
-      });
+        // --- User Management Logic ---
+        setUsernameBtn.addEventListener('click', () => {
+            const enteredUsername = usernameInput.value.trim();
+            if (enteredUsername) {
+                currentUser = enteredUsername;
+                usernameSection.classList.add('hidden');
+                chatSection.classList.remove('hidden');
 
-      // اسکرول به پایین چت هر زمان که پیام جدیدی اضافه شود
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }, (error) => {
-        // مدیریت خطا در صورت عدم موفقیت در گوش دادن به تغییرات
-        console.error("خطا در دریافت پیام‌ها از فایربیس:", error);
-        alert("خطا در اتصال به چت. لطفاً کنسول مرورگر را بررسی کنید.");
-    });
+                // Add a system message to Firestore that a user joined
+                addDoc(collection(db, "messages"), {
+                    username: "سیستم",
+                    message: `${currentUser} وارد چت شد.`,
+                    timestamp: serverTimestamp() // Use server timestamp
+                });
 
-    // --- مدیریت ارسال پیام ---
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault(); // جلوگیری از رفرش شدن صفحه هنگام ارسال فرم
-      
-      const messageText = messageInput.value.trim(); // دریافت متن پیام و حذف فاصله‌های اضافی
-      const userName = userInput.value.trim() || 'کاربر ناشناس'; // دریافت نام کاربر
+                // Focus on message input after joining
+                messageInput.focus();
+            } else {
+                alert('لطفا نام کاربری خود را وارد کنید.');
+            }
+        });
 
-      if (messageText) { // اگر پیام خالی نباشد
-        try {
-          // افزودن سند جدید به کالکشن 'messages'
-          await addDoc(messagesCollection, {
-            text: messageText,
-            user: userName,
-            timestamp: serverTimestamp() // تایم‌استمپ از سرور فایربیس برای دقت بالاتر
-          });
-          messageInput.value = ''; // پاک کردن فیلد ورودی پیام
-        } catch (e) {
-          console.error("خطا در افزودن سند:", e);
-          alert("خطا در ارسال پیام. لطفاً کنسول را برای جزئیات بیشتر بررسی کنید.");
-        }
-      }
-    });
+        // --- Message Sending Logic ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageText = messageInput.value.trim();
 
-    // --- تابع کمکی برای اسکرول به پایین (اطمینان از کارکرد صحیح) ---
-    function scrollToBottom() {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+            if (messageText && currentUser) {
+                try {
+                    // Add message to Firestore
+                    await addDoc(collection(db, "messages"), {
+                        username: currentUser,
+                        message: messageText,
+                        timestamp: serverTimestamp() // Use server timestamp for consistency
+                    });
+                    messageInput.value = ''; // Clear input field
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                    alert("خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
+                }
+            } else if (!currentUser) {
+                alert('لطفا ابتدا نام کاربری خود را وارد کنید.');
+            }
+        });
 
-    // اطمینان از اسکرول به پایین هنگام لود اولیه صفحه
-    window.addEventListener('load', scrollToBottom);
+        // --- Real-time Message Listening from Firestore ---
+        // Create a query to listen to the 'messages' collection, ordered by timestamp
+        const q = query(collection(db, "messages"), orderBy("timestamp"));
 
-  </script>
+        // Set up real-time listener for new messages
+        onSnapshot(q, (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const messageData = change.doc.data();
+                    const messageElement = document.createElement('div');
+                    messageElement.classList.add('message');
+
+                    // Add classes for styling based on sender
+                    if (messageData.username === currentUser) {
+                        messageElement.classList.add('mine');
+                    } else if (messageData.username === "سیستم") {
+                        messageElement.classList.add('system');
+                    } else {
+                        messageElement.classList.add('other');
+                    }
+
+                    // Populate message content
+                    const usernameSpan = document.createElement('strong');
+                    usernameSpan.textContent = messageData.username;
+                    messageElement.appendChild(usernameSpan);
+
+                    const messageContent = document.createElement('span');
+                    messageContent.textContent = messageData.message;
+                    messageElement.appendChild(messageContent);
+
+                    const timestampSpan = document.createElement('span');
+                    timestampSpan.classList.add('timestamp');
+                    // Check if timestamp is available and valid before formatting
+                    if (messageData.timestamp) {
+                        timestampSpan.textContent = formatTimestamp(messageData.timestamp);
+                    }
+                    messageElement.appendChild(timestampSpan);
+
+
+                    messagesDiv.appendChild(messageElement);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+                }
+                // If you want to handle modified or removed messages, you can add 'else if' conditions here.
+                // For a simple chat, 'added' is usually sufficient.
+            });
+        });
+
+    </script>
 </body>
 </html>
