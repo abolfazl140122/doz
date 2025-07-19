@@ -100,7 +100,7 @@
         async function joinPublicLobby() {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+                const roomRef = doc(db, `artifacts/hokm-d6911/public/data/rooms`, publicRoomId);
                 const membersCol = collection(roomRef, "members");
                 await setDoc(doc(membersCol, myId), { joinedAt: Date.now() });
 
@@ -177,7 +177,7 @@
         }
 
         async function sendSignal(toId, data) {
-            const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+            const roomRef = doc(db, `artifacts/hokm-d6911/public/data/rooms`, publicRoomId);
             const signalsCol = collection(roomRef, "signals");
             await addDoc(signalsCol, { ...data, from: myId, to: toId });
         }
@@ -204,7 +204,7 @@
         }
 
         hangupBtn.onclick = async () => {
-            const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+            const roomRef = doc(db, `artifacts/hokm-d6911/public/data/rooms`, publicRoomId);
             await deleteDoc(doc(collection(roomRef, "members"), myId)).catch(() => {});
             localStream?.getTracks().forEach(t => t.stop());
             Object.keys(peerConnections).forEach(closeConnection);
