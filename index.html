@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>چت روم صوتی عمومی</title>
+    <title>چت روم صوتی عمومی (نسخه نهایی)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
         .container { background-color: #fff; padding: 30px 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); max-width: 500px; width: 90%; }
@@ -50,8 +50,7 @@
             projectId: "voic-acfa3",
             storageBucket: "voic-acfa3.firebasestorage.app",
             messagingSenderId: "7797643208",
-            appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd",
-            measurementId: "G-1VQXZKZ6T9"
+            appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd"
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -62,7 +61,18 @@
         const statusDiv = document.getElementById('status');
         const remoteAudiosContainer = document.getElementById('remote-audios');
         const userList = document.getElementById('user-list');
-        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
+        
+        const servers = { 
+            iceServers: [
+                { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
+                {
+                    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                }
+            ]
+        };
+        
         let localStream, localId, userDocRef;
         const peerConnections = {}; 
         let firestoreUnsubscribes = [];
@@ -72,7 +82,7 @@
             joinBtn.disabled = true; hangupBtn.disabled = false;
             statusDiv.textContent = 'در حال درخواست دسترسی به میکروفون...';
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 localId = Math.random().toString(36).substring(2, 12);
                 userDocRef = await addDoc(collection(db, 'users'), { id: localId, name: `کاربر ${localId}` });
                 setupListeners();
@@ -97,8 +107,6 @@
                 snapshot.docChanges().forEach(change => {
                     const user = change.doc.data();
                     if (change.type === 'added' && user.id !== localId) {
-                        // **اصلاح کلیدی برای حل مشکل Glare**
-                        // فقط کاربری که شناسه بزرگتری دارد، تماس را آغاز می‌کند.
                         const isInitiator = localId > user.id;
                         createPeerConnection(user.id, isInitiator);
                     }
@@ -150,8 +158,14 @@
                 audioEl.autoplay = true;
                 remoteAudiosContainer.appendChild(audioEl);
             };
-            pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { candidate: e.candidate.toJSON() });
+            pc.onicecandidate = e => {
+                if(e.candidate) {
+                    console.log(`[ICE Candidate] نوع: ${e.candidate.type}`);
+                    sendSignal(remoteId, { candidate: e.candidate.toJSON() });
+                }
+            };
             pc.onconnectionstatechange = () => {
+                 console.log(`[State] وضعیت اتصال با ${remoteId}: ${pc.connectionState}`);
                 if (pc.connectionState === 'connected') {
                     statusDiv.textContent = 'اتصال برقرار شد! در حال مکالمه...';
                     statusDiv.style.color = 'green';
