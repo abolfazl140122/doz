@@ -1,215 +1,197 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لابی صوتی عمومی (کیفیت استودیویی)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Vazirmatn', sans-serif; }
-        .loader {
-            border: 4px solid rgba(0, 0, 0, .1);
-            border-left-color: #4f46e5;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .speaking-indicator {
-            width: 12px; height: 12px;
-            border-radius: 50%;
-            background-color: #9ca3af;
-            margin-left: 10px;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 1);
-        }
-        .is-speaking .speaking-indicator {
-            background-color: #22c55e;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-time Chat with Firebase</title>
+  <style>
+    body {
+      margin: 0;
+      padding-bottom: 3rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #chat-container {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    #messages > li {
+      background: #e4e6eb;
+      padding: 0.75rem 1rem;
+      border-radius: 18px;
+      margin-bottom: 0.5rem;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    #messages > li.mine {
+      background: #007bff;
+      color: white;
+      margin-left: auto;
+    }
+    .message-info {
+      font-size: 0.75em;
+      color: #65676b;
+      margin-top: 0.2rem;
+      display: block;
+    }
+    li.mine .message-info {
+      color: #d1e2ff;
+    }
+    #form-container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 0.5rem;
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    #user-input {
+      border: 1px solid #ccc;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      margin-right: 0.5rem;
+    }
+    #user-input:focus { outline: none; border-color: #007bff; }
+
+    #form {
+      display: flex;
+      flex-grow: 1;
+    }
+    #message-input {
+      border: 1px solid #ccc;
+      padding: 0.5rem 1rem;
+      flex-grow: 1;
+      border-radius: 20px;
+      margin-right: 0.5rem;
+    }
+    #message-input:focus { outline: none; border-color: #007bff; }
+    #form > button {
+      background: #007bff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      outline: none;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #form > button:hover {
+      background: #0056b3;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
-    <div class="container mx-auto p-4 max-w-2xl w-full">
-        <div class="bg-white rounded-2xl shadow-xl p-6">
-            <h1 class="text-2xl text-center font-bold text-indigo-600">لابی عمومی (کیفیت استودیویی)</h1>
-            <p id="status" class="text-center text-gray-500 my-4">در حال اتصال...</p>
-            <div id="users-container" class="flex flex-wrap justify-center gap-2 p-4 bg-gray-50 rounded-lg">
-                <span id="no-users-text" class="text-gray-400">هنوز کسی اینجا نیست...</span>
-            </div>
-            <div id="audio-container" class="mt-4"></div>
-            <div id="loading-spinner" class="loader w-8 h-8 rounded-full mx-auto my-4"></div>
-            <button id="hangupBtn" class="bg-red-500 text-white w-full py-2 rounded-lg hidden">خروج از لابی</button>
-            <button id="enableAudio" class="bg-green-600 text-white w-full py-2 rounded-lg mt-4">فعال‌سازی صدا</button>
-        </div>
-        <p class="text-center text-xs text-gray-400 mt-4">ساخته شده با WebRTC و Firebase</p>
-    </div>
+<body>
+  <div id="chat-container">
+    <ul id="messages"></ul>
+  </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, deleteDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  <div id="form-container">
+    <input type="text" id="user-input" placeholder="Your Name" value="Anonymous" />
+    <form id="form" action="">
+      <input id="message-input" autocomplete="off" placeholder="Type your message..." />
+      <button>Send</button>
+    </form>
+  </div>
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyBpVHnjF5gdTm3vJiHEoAZCowsRkTapj_4",
-          authDomain: "hokm-d6911.firebaseapp.com",
-          projectId: "hokm-d6911",
-          storageBucket: "hokm-d6911.appspot.com",
-          messagingSenderId: "128133280011",
-          appId: "1:128133280011:web:c9fe28f5201eef7a3a320e"
-        };
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    // For analytics, if you uncomment, also uncomment the call in initializeApp
+    // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = firebaseConfig.projectId;
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
+      authDomain: "voic-acfa3.firebaseapp.com",
+      projectId: "voic-acfa3",
+      storageBucket: "voic-acfa3.firebasestorage.app",
+      messagingSenderId: "7797643208",
+      appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd",
+      measurementId: "G-1VQXZKZ6T9"
+    };
 
-        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302'] }] };
-        const publicRoomId = "multi-user-lobby-pro-hq";
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    // const analytics = getAnalytics(app); // Uncomment if you use analytics
+    const db = getFirestore(app); // Get Firestore instance
 
-        let localStream, myId;
-        let peerConnections = {}, audioElements = {};
+    const form = document.getElementById('form');
+    const messageInput = document.getElementById('message-input');
+    const userInput = document.getElementById('user-input');
+    const messagesUl = document.getElementById('messages');
 
-        const hangupBtn = document.getElementById('hangupBtn');
-        const enableAudioBtn = document.getElementById('enableAudio');
-        const usersContainer = document.getElementById('users-container');
-        const noUsersText = document.getElementById('no-users-text');
-        const statusText = document.getElementById('status');
-        const loadingSpinner = document.getElementById('loading-spinner');
+    // Reference to the 'messages' collection in Firestore
+    const messagesCollection = collection(db, 'messages');
 
-        enableAudioBtn.onclick = () => {
-            Object.values(audioElements).forEach(audio => {
-                audio.play().catch(err => console.warn("خطای پخش صدا:", err));
-            });
-            enableAudioBtn.remove();
-        };
+    // Create a query to order messages by timestamp and listen for real-time updates
+    const q = query(messagesCollection, orderBy('timestamp'));
 
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                myId = user.uid;
-                joinPublicLobby();
-            } else {
-                signInAnonymously(auth);
-            }
-        });
+    // Set up real-time listener for messages
+    onSnapshot(q, (snapshot) => {
+      // Clear existing messages to re-render fresh list (simpler for this example)
+      // For more complex apps, you'd update specific DOM elements
+      messagesUl.innerHTML = '';
+      snapshot.forEach((doc) => {
+        const message = doc.data();
+        const item = document.createElement('li');
+        item.textContent = message.text;
+        
+        const infoSpan = document.createElement('span');
+        infoSpan.classList.add('message-info');
+        let senderInfo = message.user || 'Unknown';
+        if (message.timestamp) {
+            const date = message.timestamp.toDate(); // Convert Firestore Timestamp to JS Date
+            senderInfo += ` at ${date.toLocaleTimeString()} - ${date.toLocaleDateString()}`;
+        }
+        infoSpan.textContent = senderInfo;
 
-        async function joinPublicLobby() {
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                const roomRef = doc(db, `artifacts/hokm-d6911/public/data/rooms`, publicRoomId);
-                const membersCol = collection(roomRef, "members");
-                await setDoc(doc(membersCol, myId), { joinedAt: Date.now() });
+        item.prepend(infoSpan); // Add sender/time info above the message text
 
-                onSnapshot(membersCol, snapshot => {
-                    snapshot.docChanges().forEach(change => {
-                        const remoteId = change.doc.id;
-                        if (remoteId === myId) return;
-
-                        if (change.type === "added") {
-                            statusText.innerText = `کاربر ${remoteId.substring(0,6)} وارد شد.`;
-                            peerConnections[remoteId] = createPeerConnection(remoteId);
-                            if (myId < remoteId) sendOffer(remoteId);
-                        } else if (change.type === "removed") {
-                            closeConnection(remoteId);
-                        }
-                        updateUsersUI();
-                    });
-                });
-
-                const signalsCol = collection(roomRef, "signals");
-                const q = query(signalsCol, where("to", "==", myId));
-                onSnapshot(q, snapshot => {
-                    snapshot.forEach(async docSnap => {
-                        const data = docSnap.data();
-                        const remoteId = data.from;
-                        const pc = peerConnections[remoteId];
-                        if (!pc) return;
-
-                        if (data.offer) {
-                            await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-                            const answer = await pc.createAnswer();
-                            await pc.setLocalDescription(answer);
-                            await sendSignal(remoteId, { answer });
-                        } else if (data.answer) {
-                            await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-                        } else if (data.iceCandidate) {
-                            await pc.addIceCandidate(new RTCIceCandidate(data.iceCandidate));
-                        }
-                        await deleteDoc(docSnap.ref);
-                    });
-                });
-
-                loadingSpinner.classList.add('hidden');
-                hangupBtn.classList.remove('hidden');
-
-            } catch (err) {
-                alert("خطا در اتصال به لابی: " + err.message);
-            }
+        if (message.user === userInput.value) { // Basic check to style "my" messages
+            item.classList.add('mine');
         }
 
-        function createPeerConnection(remoteId) {
-            const pc = new RTCPeerConnection(servers);
-            pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { iceCandidate: e.candidate.toJSON() });
+        messagesUl.appendChild(item);
+      });
+      // Scroll to the bottom of the chat
+      messagesUl.scrollTop = messagesUl.scrollHeight;
+      messagesUl.parentElement.scrollTop = messagesUl.parentElement.scrollHeight; // Scroll parent div
+    });
 
-            pc.ontrack = event => {
-                let audio = document.createElement('audio');
-                audio.id = `audio-${remoteId}`;
-                audio.srcObject = event.streams[0];
-                audio.autoplay = false;
-                audio.playsInline = true;
-                document.getElementById('audio-container').appendChild(audio);
-                audioElements[remoteId] = audio;
-            };
+    // Handle sending messages
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault(); // Prevent page refresh
+      const messageText = messageInput.value.trim();
+      const userName = userInput.value.trim() || 'Anonymous'; // Use "Anonymous" if user name is empty
 
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            return pc;
+      if (messageText) {
+        try {
+          // Add a new message document to the 'messages' collection
+          await addDoc(messagesCollection, {
+            text: messageText,
+            user: userName,
+            timestamp: serverTimestamp() // Firebase server timestamp for accurate ordering
+          });
+          messageInput.value = ''; // Clear input field
+        } catch (e) {
+          console.error("Error adding document: ", e);
+          alert("Error sending message. Check console for details.");
         }
-
-        async function sendOffer(remoteId) {
-            const pc = peerConnections[remoteId];
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            await sendSignal(remoteId, { offer });
-        }
-
-        async function sendSignal(toId, data) {
-            const roomRef = doc(db, `artifacts/hokm-d6911/public/data/rooms`, publicRoomId);
-            const signalsCol = collection(roomRef, "signals");
-            await addDoc(signalsCol, { ...data, from: myId, to: toId });
-        }
-
-        function closeConnection(remoteId) {
-            peerConnections[remoteId]?.close();
-            delete peerConnections[remoteId];
-            document.getElementById(`audio-${remoteId}`)?.remove();
-        }
-
-        function updateUsersUI() {
-            const ids = new Set(Object.keys(peerConnections));
-            if (myId) ids.add(myId);
-            usersContainer.innerHTML = '';
-            if (ids.size <= 1) usersContainer.appendChild(noUsersText);
-            else noUsersText.remove();
-            ids.forEach(id => {
-                const div = document.createElement('div');
-                div.className = 'user-bubble';
-                div.id = `user-${id}`;
-                div.innerHTML = `<span>کاربر ${id.substring(0,6)}${id === myId ? ' (شما)' : ''}</span><div class='speaking-indicator'></div>`;
-                usersContainer.appendChild(div);
-            });
-        }
-
-        hangupBtn.onclick = async () => {
-            const roomRef = doc(db, `artifacts/hokm-d6911/public/data/rooms`, publicRoomId);
-            await deleteDoc(doc(collection(roomRef, "members"), myId)).catch(() => {});
-            localStream?.getTracks().forEach(t => t.stop());
-            Object.keys(peerConnections).forEach(closeConnection);
-            window.location.reload();
-        };
-    </script>
+      }
+    });
+  </script>
 </body>
 </html>
