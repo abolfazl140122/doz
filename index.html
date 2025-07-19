@@ -1,81 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl"> <!-- تنظیم جهت‌دهی به راست به چپ برای زبان فارسی -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Real-time Chat with Firebase</title>
+  <title>گفتگوی زنده با فایربیس</title>
   <style>
+    /* CSS برای استایل‌دهی ظاهر چت */
     body {
       margin: 0;
-      padding-bottom: 3rem;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f0f2f5;
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      height: 100vh; /* ارتفاع کامل صفحه */
     }
+
+    /* کانتینر اصلی چت برای اسکرول‌پذیری */
     #chat-container {
-      flex-grow: 1;
-      overflow-y: auto;
+      flex-grow: 1; /* اجازه می‌دهد تا فضای باقی‌مانده را اشغال کند */
+      overflow-y: auto; /* اسکرول عمودی در صورت نیاز */
       padding: 1rem;
+      display: flex; /* برای چسباندن پیام‌ها به پایین */
+      flex-direction: column-reverse; /* پیام‌های جدید از پایین اضافه شوند */
     }
+
+    /* لیست پیام‌ها */
     #messages {
       list-style-type: none;
       margin: 0;
       padding: 0;
+      flex-grow: 1; /* اجازه می‌دهد پیام‌ها از بالا به پایین پر شوند */
+      display: flex;
+      flex-direction: column; /* پیام‌ها به ترتیب در ستون قرار گیرند */
+      justify-content: flex-end; /* پیام‌ها از پایین شروع شوند */
     }
+
+    /* استایل کلی برای هر پیام */
     #messages > li {
-      background: #e4e6eb;
+      background: #e4e6eb; /* رنگ پس‌زمینه پیام‌های دیگران */
       padding: 0.75rem 1rem;
-      border-radius: 18px;
+      border-radius: 18px; /* گوشه‌های گرد */
       margin-bottom: 0.5rem;
-      max-width: 80%;
-      word-wrap: break-word;
+      max-width: 80%; /* حداکثر عرض پیام */
+      word-wrap: break-word; /* شکستن کلمات طولانی */
+      align-self: flex-start; /* پیام‌های دیگران در سمت چپ */
+      direction: rtl; /* متن پیام از راست به چپ */
+      text-align: right; /* تراز متن به راست */
     }
+
+    /* استایل برای پیام‌های خودم */
     #messages > li.mine {
-      background: #007bff;
-      color: white;
-      margin-left: auto;
+      background: #007bff; /* رنگ آبی برای پیام‌های من */
+      color: white; /* متن سفید */
+      align-self: flex-end; /* پیام‌های من در سمت راست */
+      text-align: right;
     }
+
+    /* اطلاعات فرستنده و زمان */
     .message-info {
       font-size: 0.75em;
       color: #65676b;
       margin-top: 0.2rem;
       display: block;
+      direction: rtl; /* جهت متن */
+      text-align: right;
     }
+
+    /* اطلاعات فرستنده در پیام‌های خودم */
     li.mine .message-info {
-      color: #d1e2ff;
+      color: #d1e2ff; /* رنگ روشن‌تر برای پیام‌های من */
     }
+
+    /* کانتینر فرم ارسال پیام */
     #form-container {
       background: rgba(255, 255, 255, 0.95);
       padding: 0.5rem;
-      position: sticky;
+      position: sticky; /* برای چسبیدن به پایین */
       bottom: 0;
       left: 0;
       right: 0;
       display: flex;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* سایه در بالا */
+      align-items: center; /* تراز عمودی عناصر */
+      direction: rtl; /* جهت‌دهی از راست به چپ برای کل فرم */
     }
+
+    /* فیلد ورودی نام کاربر */
     #user-input {
       border: 1px solid #ccc;
       padding: 0.5rem 1rem;
       border-radius: 20px;
-      margin-right: 0.5rem;
+      margin-left: 0.5rem; /* فاصله از فرم اصلی */
+      width: 120px; /* عرض ثابت */
+      flex-shrink: 0; /* از جمع شدن جلوگیری می‌کند */
+      text-align: right;
     }
-    #user-input:focus { outline: none; border-color: #007bff; }
+    #user-input:focus {
+      outline: none;
+      border-color: #007bff;
+    }
 
+    /* فرم ارسال پیام */
     #form {
       display: flex;
-      flex-grow: 1;
+      flex-grow: 1; /* اجازه می‌دهد فضای باقی‌مانده را پر کند */
     }
+
+    /* فیلد ورودی پیام */
     #message-input {
       border: 1px solid #ccc;
       padding: 0.5rem 1rem;
       flex-grow: 1;
       border-radius: 20px;
-      margin-right: 0.5rem;
+      margin-left: 0.5rem; /* فاصله از دکمه ارسال */
+      text-align: right;
     }
-    #message-input:focus { outline: none; border-color: #007bff; }
+    #message-input:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+
+    /* دکمه ارسال */
     #form > button {
       background: #007bff;
       border: none;
@@ -92,27 +138,27 @@
   </style>
 </head>
 <body>
+  <!-- کانتینر نمایش پیام‌ها -->
   <div id="chat-container">
     <ul id="messages"></ul>
   </div>
 
+  <!-- کانتینر فرم ورودی نام و پیام -->
   <div id="form-container">
-    <input type="text" id="user-input" placeholder="Your Name" value="Anonymous" />
+    <input type="text" id="user-input" placeholder="نام شما" value="کاربر ناشناس" />
     <form id="form" action="">
-      <input id="message-input" autocomplete="off" placeholder="Type your message..." />
-      <button>Send</button>
+      <input id="message-input" autocomplete="off" placeholder="پیام خود را تایپ کنید..." />
+      <button>ارسال</button>
     </form>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs و کد JavaScript -->
   <script type="module">
-    // Import the functions you need from the SDKs you need
+    // --- تنظیمات و ایمپورت‌های Firebase ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    // For analytics, if you uncomment, also uncomment the call in initializeApp
-    // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-    // Your web app's Firebase configuration
+    // تنظیمات پروژه Firebase شما (از کنسول Firebase کپی شده)
     const firebaseConfig = {
       apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
       authDomain: "voic-acfa3.firebaseapp.com",
@@ -123,75 +169,110 @@
       measurementId: "G-1VQXZKZ6T9"
     };
 
-    // Initialize Firebase
+    // --- راه‌اندازی Firebase و Firestore ---
     const app = initializeApp(firebaseConfig);
-    // const analytics = getAnalytics(app); // Uncomment if you use analytics
-    const db = getFirestore(app); // Get Firestore instance
+    const db = getFirestore(app); // دریافت نمونه پایگاه داده Firestore
 
+    // --- انتخاب عناصر DOM ---
     const form = document.getElementById('form');
     const messageInput = document.getElementById('message-input');
     const userInput = document.getElementById('user-input');
     const messagesUl = document.getElementById('messages');
+    const chatContainer = document.getElementById('chat-container'); // برای اسکرول صحیح
 
-    // Reference to the 'messages' collection in Firestore
+    // --- تنظیم نام کاربری پیش‌فرض یا از Local Storage ---
+    // این امکان را می‌دهد که نام کاربری حتی پس از رفرش صفحه حفظ شود.
+    const savedUserName = localStorage.getItem('chatUserName');
+    if (savedUserName) {
+        userInput.value = savedUserName;
+    } else {
+        userInput.value = "کاربر ناشناس"; // نام پیش‌فرض
+    }
+
+    // ذخیره نام کاربری هنگام تغییر آن
+    userInput.addEventListener('input', () => {
+        localStorage.setItem('chatUserName', userInput.value.trim());
+    });
+
+    // --- ارجاع به کالکشن 'messages' در Firestore ---
     const messagesCollection = collection(db, 'messages');
 
-    // Create a query to order messages by timestamp and listen for real-time updates
-    const q = query(messagesCollection, orderBy('timestamp'));
+    // --- ایجاد کوئری برای دریافت پیام‌ها و مرتب‌سازی بر اساس زمان ---
+    // orderBy('timestamp') باعث می‌شود پیام‌ها به ترتیب زمان ارسال نمایش داده شوند.
+    const q = query(messagesCollection, orderBy('timestamp', 'asc')); // 'asc' برای صعودی (قدیمی‌ترین اول)
 
-    // Set up real-time listener for messages
+    // --- گوش دادن به تغییرات Real-time در Firestore ---
+    // onSnapshot هر بار که تغییری در کالکشن 'messages' اتفاق بیفتد (اضافه، حذف، ویرایش) اجرا می‌شود.
     onSnapshot(q, (snapshot) => {
-      // Clear existing messages to re-render fresh list (simpler for this example)
-      // For more complex apps, you'd update specific DOM elements
+      // پیام‌های موجود را پاک کرده و دوباره از اول رندر می‌کنیم (روش ساده برای این پروژه)
+      // در پروژه‌های بزرگتر، بهتر است فقط تغییرات را اعمال کنید تا کارایی بالاتر رود.
       messagesUl.innerHTML = '';
       snapshot.forEach((doc) => {
-        const message = doc.data();
-        const item = document.createElement('li');
-        item.textContent = message.text;
+        const message = doc.data(); // دریافت داده‌های سند
+        const item = document.createElement('li'); // ایجاد عنصر li برای هر پیام
         
+        // ایجاد span برای نمایش اطلاعات فرستنده و زمان
         const infoSpan = document.createElement('span');
         infoSpan.classList.add('message-info');
-        let senderInfo = message.user || 'Unknown';
+        let senderInfo = message.user || 'Unknown'; // اگر نام کاربر نبود، 'Unknown' نمایش دهد
+        
+        // فرمت‌دهی زمان
         if (message.timestamp) {
-            const date = message.timestamp.toDate(); // Convert Firestore Timestamp to JS Date
-            senderInfo += ` at ${date.toLocaleTimeString()} - ${date.toLocaleDateString()}`;
+            const date = message.timestamp.toDate(); // تبدیل Timestamp فایربیس به شیء Date جاوااسکریپت
+            senderInfo += ` در ${date.toLocaleTimeString('fa-IR')} - ${date.toLocaleDateString('fa-IR')}`;
         }
         infoSpan.textContent = senderInfo;
 
-        item.prepend(infoSpan); // Add sender/time info above the message text
+        item.appendChild(infoSpan); // اضافه کردن اطلاعات فرستنده
+        item.appendChild(document.createTextNode(message.text)); // اضافه کردن متن پیام
 
-        if (message.user === userInput.value) { // Basic check to style "my" messages
+        // استایل‌دهی پیام‌های خودم
+        if (message.user === userInput.value) {
             item.classList.add('mine');
         }
 
-        messagesUl.appendChild(item);
+        messagesUl.appendChild(item); // اضافه کردن پیام به لیست
       });
-      // Scroll to the bottom of the chat
-      messagesUl.scrollTop = messagesUl.scrollHeight;
-      messagesUl.parentElement.scrollTop = messagesUl.parentElement.scrollHeight; // Scroll parent div
+
+      // اسکرول به پایین چت هر زمان که پیام جدیدی اضافه شود
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }, (error) => {
+        // مدیریت خطا در صورت عدم موفقیت در گوش دادن به تغییرات
+        console.error("خطا در دریافت پیام‌ها از فایربیس:", error);
+        alert("خطا در اتصال به چت. لطفاً کنسول مرورگر را بررسی کنید.");
     });
 
-    // Handle sending messages
+    // --- مدیریت ارسال پیام ---
     form.addEventListener('submit', async function(e) {
-      e.preventDefault(); // Prevent page refresh
-      const messageText = messageInput.value.trim();
-      const userName = userInput.value.trim() || 'Anonymous'; // Use "Anonymous" if user name is empty
+      e.preventDefault(); // جلوگیری از رفرش شدن صفحه هنگام ارسال فرم
+      
+      const messageText = messageInput.value.trim(); // دریافت متن پیام و حذف فاصله‌های اضافی
+      const userName = userInput.value.trim() || 'کاربر ناشناس'; // دریافت نام کاربر
 
-      if (messageText) {
+      if (messageText) { // اگر پیام خالی نباشد
         try {
-          // Add a new message document to the 'messages' collection
+          // افزودن سند جدید به کالکشن 'messages'
           await addDoc(messagesCollection, {
             text: messageText,
             user: userName,
-            timestamp: serverTimestamp() // Firebase server timestamp for accurate ordering
+            timestamp: serverTimestamp() // تایم‌استمپ از سرور فایربیس برای دقت بالاتر
           });
-          messageInput.value = ''; // Clear input field
+          messageInput.value = ''; // پاک کردن فیلد ورودی پیام
         } catch (e) {
-          console.error("Error adding document: ", e);
-          alert("Error sending message. Check console for details.");
+          console.error("خطا در افزودن سند:", e);
+          alert("خطا در ارسال پیام. لطفاً کنسول را برای جزئیات بیشتر بررسی کنید.");
         }
       }
     });
+
+    // --- تابع کمکی برای اسکرول به پایین (اطمینان از کارکرد صحیح) ---
+    function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // اطمینان از اسکرول به پایین هنگام لود اولیه صفحه
+    window.addEventListener('load', scrollToBottom);
+
   </script>
 </body>
 </html>
