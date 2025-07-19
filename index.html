@@ -71,35 +71,30 @@
         const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
 
         let localStream, localId, userDocRef;
-        const peerConnections = {}; // آبجکت اصلی برای نگهداری ارتباطات
+        const peerConnections = {}; 
         let firestoreUnsubscribes = [];
 
         // 3. منطق اصلی برنامه
         const joinRoom = async () => {
-            console.log("--- 🟢 دکمه ورود کلیک شد ---");
             joinBtn.disabled = true;
             hangupBtn.disabled = false;
             statusDiv.textContent = 'در حال درخواست دسترسی به میکروفون...';
 
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-                console.log("✅ دسترسی به میکروفون موفقیت‌آمیز بود.");
-                
                 localId = Math.random().toString(36).substring(2, 10);
                 userDocRef = await addDoc(collection(db, 'users'), { id: localId, name: `کاربر ${localId}` });
-                console.log(`👤 کاربر به Firestore اضافه شد. شناسه شما: ${localId}`);
-
                 setupListeners();
                 statusDiv.textContent = 'شما در اتاق هستید. منتظر دیگران...';
             } catch (error) {
-                console.error("❌ خطا در دسترسی به میکروفون: ", error);
-                statusDiv.textContent = 'امکان دسترسی به میکروفون وجود ندارد. لطفا مجوز را بدهید.';
+                console.error("❌ خطا: ", error);
+                statusDiv.textContent = 'خطایی رخ داد. لطفا دوباره تلاش کنید.';
                 hangup();
             }
         };
 
         function setupListeners() {
-            // شنونده برای ورود و خروج کاربران
+            // شنونده برای کاربران
             const usersUnsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
                 userList.innerHTML = '';
                 snapshot.forEach(doc => {
@@ -121,7 +116,7 @@
                 });
             });
 
-            // شنونده برای سیگنال‌های WebRTC
+            // شنونده برای سیگنال‌ها
             const signalsQuery = query(collection(db, 'signals'), where("to", "==", localId));
             const signalsUnsubscribe = onSnapshot(signalsQuery, async (snapshot) => {
                 for (const change of snapshot.docChanges()) {
@@ -133,31 +128,31 @@
                         
                         const { pc, iceCandidateQueue } = peerConnections[fromId];
 
-                        if (signal.sdp) {
-                            console.log(`[📥 SDP] از ${fromId} دریافت شد.`);
-                            await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-                            
-                            // پردازش کاندیداهای در صف
-                            console.log(`[ICE] پردازش ${iceCandidateQueue.length} کاندیدای موجود در صف برای ${fromId}...`);
-                            while (iceCandidateQueue.length > 0) {
-                                const candidate = iceCandidateQueue.shift();
-                                await pc.addIceCandidate(candidate);
-                            }
+                        try {
+                            if (signal.sdp) {
+                                await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+                                
+                                while (iceCandidateQueue.length > 0) {
+                                    const candidate = iceCandidateQueue.shift();
+                                    await pc.addIceCandidate(candidate);
+                                }
 
-                            if (pc.remoteDescription.type === 'offer') {
-                                const answer = await pc.createAnswer();
-                                await pc.setLocalDescription(answer);
-                                sendSignal(fromId, { sdp: pc.localDescription });
+                                if (pc.remoteDescription.type === 'offer') {
+                                    const answer = await pc.createAnswer();
+                                    await pc.setLocalDescription(answer);
+                                    sendSignal(fromId, { sdp: pc.localDescription.toJSON() });
+                                }
+                            } else if (signal.candidate) {
+                                if (pc.remoteDescription) {
+                                    await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+                                } else {
+                                    iceCandidateQueue.push(new RTCIceCandidate(signal.candidate));
+                                }
                             }
-                        } else if (signal.candidate) {
-                            console.log(`[📥 ICE] از ${fromId} دریافت شد.`);
-                            if (pc.remoteDescription) {
-                                await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
-                            } else {
-                                console.log(`[ICE] کاندیدا در صف قرار گرفت چون remote description هنوز تنظیم نشده.`);
-                                iceCandidateQueue.push(new RTCIceCandidate(signal.candidate));
-                            }
+                        } catch (e) {
+                            console.error("خطا در پردازش سیگنال: ", e);
                         }
+                        
                         await deleteDoc(change.doc.ref);
                     }
                 }
@@ -167,10 +162,8 @@
         }
 
         function createPeerConnection(remoteId, isInitiator) {
-            console.log(`🤝 ایجاد PeerConnection برای ${remoteId}. آیا ما آغازگر هستیم؟ ${isInitiator}`);
             const pc = new RTCPeerConnection(servers);
             
-            // **راه حل کلیدی**: ایجاد یک صف برای هر ارتباط
             peerConnections[remoteId] = {
                 pc: pc,
                 iceCandidateQueue: [],
@@ -179,19 +172,17 @@
             localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
             pc.ontrack = event => {
-                console.log(`🎤 ترک صوتی از ${remoteId} دریافت شد.`);
                 const audioEl = document.createElement('audio');
                 audioEl.srcObject = event.streams[0];
                 audioEl.autoplay = true;
                 audioEl.playsInline = true;
                 remoteAudiosContainer.appendChild(audioEl);
-                audioEl.play().catch(e => console.error("❌ خطا در پخش خودکار صدا: ", e));
+                audioEl.play().catch(e => console.error("خطا در پخش خودکار: ", e));
             };
 
             pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { candidate: e.candidate.toJSON() });
             
             pc.onconnectionstatechange = () => {
-                console.log(`[State] وضعیت اتصال با ${remoteId}: ${pc.connectionState}`);
                 if (pc.connectionState === 'connected') {
                     statusDiv.textContent = 'اتصال برقرار شد! در حال مکالمه...';
                     statusDiv.style.color = 'green';
@@ -200,18 +191,17 @@
 
             if (isInitiator) {
                 pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
-                    sendSignal(remoteId, { sdp: pc.localDescription });
+                    // **اصلاح کلیدی در اینجا**
+                    sendSignal(remoteId, { sdp: pc.localDescription.toJSON() });
                 });
             }
         }
 
         async function sendSignal(toId, data) {
-            console.log(`[📤] ارسال سیگنال به ${toId}`);
             await addDoc(collection(db, 'signals'), { to: toId, from: localId, ...data });
         }
 
         const hangup = async () => {
-            console.log("--- 🔴 دکمه خروج کلیک شد ---");
             firestoreUnsubscribes.forEach(unsub => unsub());
             firestoreUnsubscribes = [];
 
@@ -224,7 +214,6 @@
 
             if (userDocRef) await deleteDoc(userDocRef);
 
-            // بازنشانی متغیرها
             localStream = null;
             userDocRef = null;
             
