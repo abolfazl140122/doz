@@ -47,7 +47,7 @@
     <script type="module">
         // 1. راه‌اندازی FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, doc, addDoc, onSnapshot, query, where, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
@@ -61,7 +61,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // 2. متغیرهای سراسری و تنظیمات WEBRTC
+        // 2. متغیرهای سراسری
         const joinBtn = document.getElementById('joinBtn');
         const hangupBtn = document.getElementById('hangupBtn');
         const statusDiv = document.getElementById('status');
@@ -71,7 +71,7 @@
         const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
 
         let localStream, localId, userDocRef;
-        const peerConnections = {};
+        const peerConnections = {}; // آبجکت اصلی برای نگهداری ارتباطات
         let firestoreUnsubscribes = [];
 
         // 3. منطق اصلی برنامه
@@ -94,13 +94,12 @@
             } catch (error) {
                 console.error("❌ خطا در دسترسی به میکروفون: ", error);
                 statusDiv.textContent = 'امکان دسترسی به میکروفون وجود ندارد. لطفا مجوز را بدهید.';
-                hangup(); // بازگرداندن به حالت اولیه
+                hangup();
             }
         };
 
         function setupListeners() {
-            console.log("🎧 در حال تنظیم شنونده‌ها...");
-            // شنونده برای کاربران
+            // شنونده برای ورود و خروج کاربران
             const usersUnsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
                 userList.innerHTML = '';
                 snapshot.forEach(doc => {
@@ -113,53 +112,69 @@
                 snapshot.docChanges().forEach(change => {
                     const user = change.doc.data();
                     if (change.type === 'added' && user.id !== localId) {
-                        console.log(`[Users] کاربر جدید (${user.id}) وارد شد. شروع ارتباط...`);
                         createPeerConnection(user.id, true);
                     }
                     if (change.type === 'removed' && peerConnections[user.id]) {
-                        console.log(`[Users] کاربر (${user.id}) خارج شد. قطع ارتباط...`);
-                        peerConnections[user.id].close();
+                        peerConnections[user.id].pc.close();
                         delete peerConnections[user.id];
                     }
                 });
             });
 
-            // شنونده برای سیگنال‌ها
+            // شنونده برای سیگنال‌های WebRTC
             const signalsQuery = query(collection(db, 'signals'), where("to", "==", localId));
-            const signalsUnsubscribe = onSnapshot(signalsQuery, (snapshot) => {
-                snapshot.docChanges().forEach(async (change) => {
+            const signalsUnsubscribe = onSnapshot(signalsQuery, async (snapshot) => {
+                for (const change of snapshot.docChanges()) {
                     if (change.type === 'added') {
                         const signal = change.doc.data();
-                        const pc = peerConnections[signal.from];
-                        
-                        console.log(`[Signals] سیگنال از ${signal.from} دریافت شد.`, signal);
+                        const fromId = signal.from;
 
-                        if (pc && signal.sdp) {
+                        if (!peerConnections[fromId]) createPeerConnection(fromId, false);
+                        
+                        const { pc, iceCandidateQueue } = peerConnections[fromId];
+
+                        if (signal.sdp) {
+                            console.log(`[📥 SDP] از ${fromId} دریافت شد.`);
                             await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-                            if (signal.sdp.type === 'offer') {
+                            
+                            // پردازش کاندیداهای در صف
+                            console.log(`[ICE] پردازش ${iceCandidateQueue.length} کاندیدای موجود در صف برای ${fromId}...`);
+                            while (iceCandidateQueue.length > 0) {
+                                const candidate = iceCandidateQueue.shift();
+                                await pc.addIceCandidate(candidate);
+                            }
+
+                            if (pc.remoteDescription.type === 'offer') {
                                 const answer = await pc.createAnswer();
                                 await pc.setLocalDescription(answer);
-                                sendSignal(signal.from, { sdp: pc.localDescription });
+                                sendSignal(fromId, { sdp: pc.localDescription });
                             }
-                        } else if (pc && signal.candidate) {
-                            await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+                        } else if (signal.candidate) {
+                            console.log(`[📥 ICE] از ${fromId} دریافت شد.`);
+                            if (pc.remoteDescription) {
+                                await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+                            } else {
+                                console.log(`[ICE] کاندیدا در صف قرار گرفت چون remote description هنوز تنظیم نشده.`);
+                                iceCandidateQueue.push(new RTCIceCandidate(signal.candidate));
+                            }
                         }
                         await deleteDoc(change.doc.ref);
                     }
-                });
+                }
             });
 
             firestoreUnsubscribes.push(usersUnsubscribe, signalsUnsubscribe);
         }
 
         function createPeerConnection(remoteId, isInitiator) {
-            if (peerConnections[remoteId]) {
-                console.warn(`ارتباط با ${remoteId} از قبل وجود دارد.`);
-                return;
-            }
             console.log(`🤝 ایجاد PeerConnection برای ${remoteId}. آیا ما آغازگر هستیم؟ ${isInitiator}`);
             const pc = new RTCPeerConnection(servers);
-            peerConnections[remoteId] = pc;
+            
+            // **راه حل کلیدی**: ایجاد یک صف برای هر ارتباط
+            peerConnections[remoteId] = {
+                pc: pc,
+                iceCandidateQueue: [],
+            };
 
             localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
@@ -173,34 +188,25 @@
                 audioEl.play().catch(e => console.error("❌ خطا در پخش خودکار صدا: ", e));
             };
 
-            pc.onicecandidate = e => {
-                if (e.candidate) {
-                    sendSignal(remoteId, { candidate: e.candidate.toJSON() });
-                }
-            };
+            pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { candidate: e.candidate.toJSON() });
             
             pc.onconnectionstatechange = () => {
                 console.log(`[State] وضعیت اتصال با ${remoteId}: ${pc.connectionState}`);
-                if(pc.connectionState === 'connected') {
+                if (pc.connectionState === 'connected') {
                     statusDiv.textContent = 'اتصال برقرار شد! در حال مکالمه...';
                     statusDiv.style.color = 'green';
-                } else if (pc.connectionState === 'failed') {
-                    statusDiv.textContent = `اتصال با ${remoteId} ناموفق بود.`;
-                    statusDiv.style.color = 'red';
-                    pc.restartIce(); // تلاش برای اتصال مجدد
                 }
             };
 
             if (isInitiator) {
                 pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
-                    console.log(`[Offer] Offer ساخته شد. در حال ارسال برای ${remoteId}...`);
                     sendSignal(remoteId, { sdp: pc.localDescription });
                 });
             }
         }
 
         async function sendSignal(toId, data) {
-            console.log(`📤 ارسال سیگنال به ${toId}:`, data);
+            console.log(`[📤] ارسال سیگنال به ${toId}`);
             await addDoc(collection(db, 'signals'), { to: toId, from: localId, ...data });
         }
 
@@ -209,20 +215,19 @@
             firestoreUnsubscribes.forEach(unsub => unsub());
             firestoreUnsubscribes = [];
 
-            Object.values(peerConnections).forEach(pc => pc.close());
+            Object.values(peerConnections).forEach(conn => conn.pc.close());
             
             if (localStream) localStream.getTracks().forEach(track => track.stop());
-            localStream = null;
-
+            
             remoteAudiosContainer.innerHTML = '';
             userList.innerHTML = '';
 
-            if (userDocRef) {
-                await deleteDoc(userDocRef);
-                console.log("👤 کاربر از Firestore حذف شد.");
-                userDocRef = null;
-            }
+            if (userDocRef) await deleteDoc(userDocRef);
 
+            // بازنشانی متغیرها
+            localStream = null;
+            userDocRef = null;
+            
             joinBtn.disabled = false;
             hangupBtn.disabled = true;
             statusDiv.textContent = 'شما از اتاق خارج شدید.';
@@ -231,9 +236,7 @@
 
         joinBtn.onclick = joinRoom;
         hangupBtn.onclick = hangup;
-        window.addEventListener('beforeunload', () => {
-            if (localStream) hangup();
-        });
+        window.addEventListener('beforeunload', () => localStream && hangup());
     </script>
 </body>
 </html>
