@@ -15,7 +15,7 @@
         button:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
         #hangupBtn { background-color: #d93025; }
         #hangupBtn:hover:not(:disabled) { background-color: #b5281e; }
-        #status { margin-top: 20px; font-weight: bold; color: #555; min-height: 24px; }
+        #status { margin-top: 20px; font-weight: bold; color: #555; min-height: 24px; transition: color 0.3s; }
         #remote-audios video, #remote-audios audio { display: none; }
         .lobby { margin-top: 25px; text-align: right; }
         .lobby h3 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
@@ -27,7 +27,7 @@
 
     <div class="container">
         <h1>چت روم صوتی عمومی</h1>
-        <p>با کلیک روی دکمه "ورود به چت"، به اتاق عمومی متصل شوید. لیست کاربران حاضر در زیر نمایش داده می‌شود.</p>
+        <p>با کلیک روی "ورود به چت"، به اتاق عمومی متصل شوید. لیست کاربران حاضر در زیر نمایش داده می‌شود.</p>
         
         <div class="buttons">
             <button id="joinBtn">ورود به چت</button>
@@ -38,9 +38,7 @@
         
         <div class="lobby">
             <h3>کاربران حاضر در لابی</h3>
-            <ul id="user-list">
-                <!-- لیست کاربران اینجا قرار می‌گیرد -->
-            </ul>
+            <ul id="user-list"></ul>
         </div>
         
         <div id="remote-audios"></div>
@@ -78,132 +76,164 @@
 
         // 3. منطق اصلی برنامه
         const joinRoom = async () => {
+            console.log("--- 🟢 دکمه ورود کلیک شد ---");
             joinBtn.disabled = true;
+            hangupBtn.disabled = false;
             statusDiv.textContent = 'در حال درخواست دسترسی به میکروفون...';
 
             try {
-                // مرحله کلیدی: بلافاصله درخواست دسترسی به میکروفون
                 localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-                statusDiv.textContent = 'دسترسی موفق! در حال اتصال به اتاق...';
-                hangupBtn.disabled = false;
+                console.log("✅ دسترسی به میکروفون موفقیت‌آمیز بود.");
                 
-                localId = Math.random().toString(36).substring(2, 10); // شناسه کوتاه‌تر و خواناتر
+                localId = Math.random().toString(36).substring(2, 10);
                 userDocRef = await addDoc(collection(db, 'users'), { id: localId, name: `کاربر ${localId}` });
+                console.log(`👤 کاربر به Firestore اضافه شد. شناسه شما: ${localId}`);
 
-                setupUserListener();
-                setupSignalListener();
-
+                setupListeners();
+                statusDiv.textContent = 'شما در اتاق هستید. منتظر دیگران...';
             } catch (error) {
-                console.error("خطا در دسترسی به میکروفون: ", error);
-                statusDiv.textContent = 'امکان دسترسی به میکروفون وجود ندارد. لطفا مجوز را بدهید و دوباره تلاش کنید.';
-                joinBtn.disabled = false;
+                console.error("❌ خطا در دسترسی به میکروفون: ", error);
+                statusDiv.textContent = 'امکان دسترسی به میکروفون وجود ندارد. لطفا مجوز را بدهید.';
+                hangup(); // بازگرداندن به حالت اولیه
             }
         };
-        
-        function setupUserListener() {
-            const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
-                // پاک کردن لیست فعلی
+
+        function setupListeners() {
+            console.log("🎧 در حال تنظیم شنونده‌ها...");
+            // شنونده برای کاربران
+            const usersUnsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
                 userList.innerHTML = '';
-                // بازسازی لیست کاربران
                 snapshot.forEach(doc => {
                     const user = doc.data();
-                    const userElement = document.createElement('li');
-                    userElement.textContent = user.name + (user.id === localId ? ' (شما)' : '');
-                    userList.appendChild(userElement);
+                    const li = document.createElement('li');
+                    li.textContent = user.name + (user.id === localId ? ' (شما)' : '');
+                    userList.appendChild(li);
                 });
 
-                // مدیریت اتصال به کاربران جدید
-                snapshot.docChanges().forEach(async (change) => {
-                    const remoteUser = change.doc.data();
-                    if (change.type === 'added' && remoteUser.id !== localId) {
-                        createPeerConnection(remoteUser.id, true);
+                snapshot.docChanges().forEach(change => {
+                    const user = change.doc.data();
+                    if (change.type === 'added' && user.id !== localId) {
+                        console.log(`[Users] کاربر جدید (${user.id}) وارد شد. شروع ارتباط...`);
+                        createPeerConnection(user.id, true);
                     }
-                    if (change.type === 'removed') {
-                        if (peerConnections[remoteUser.id]) {
-                            peerConnections[remoteUser.id].close();
-                            delete peerConnections[remoteUser.id];
-                        }
+                    if (change.type === 'removed' && peerConnections[user.id]) {
+                        console.log(`[Users] کاربر (${user.id}) خارج شد. قطع ارتباط...`);
+                        peerConnections[user.id].close();
+                        delete peerConnections[user.id];
                     }
                 });
             });
-            firestoreUnsubscribes.push(unsubscribe);
-        }
 
-        function setupSignalListener() {
-            const q = query(collection(db, 'signals'), where("to", "==", localId));
-            const unsubscribe = onSnapshot(q, (snapshot) => {
+            // شنونده برای سیگنال‌ها
+            const signalsQuery = query(collection(db, 'signals'), where("to", "==", localId));
+            const signalsUnsubscribe = onSnapshot(signalsQuery, (snapshot) => {
                 snapshot.docChanges().forEach(async (change) => {
                     if (change.type === 'added') {
-                        const { from, sdp, candidate } = change.doc.data();
-                        await deleteDoc(doc(db, 'signals', change.doc.id));
+                        const signal = change.doc.data();
+                        const pc = peerConnections[signal.from];
+                        
+                        console.log(`[Signals] سیگنال از ${signal.from} دریافت شد.`, signal);
 
-                        if (!peerConnections[from]) {
-                            createPeerConnection(from, false);
-                        }
-
-                        const pc = peerConnections[from];
-                        if (sdp) {
-                            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-                            if (pc.remoteDescription.type === 'offer') {
+                        if (pc && signal.sdp) {
+                            await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+                            if (signal.sdp.type === 'offer') {
                                 const answer = await pc.createAnswer();
                                 await pc.setLocalDescription(answer);
-                                sendSignal(from, { sdp: pc.localDescription });
+                                sendSignal(signal.from, { sdp: pc.localDescription });
                             }
-                        } else if (candidate) {
-                            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                        } else if (pc && signal.candidate) {
+                            await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
                         }
+                        await deleteDoc(change.doc.ref);
                     }
                 });
             });
-            firestoreUnsubscribes.push(unsubscribe);
+
+            firestoreUnsubscribes.push(usersUnsubscribe, signalsUnsubscribe);
         }
 
         function createPeerConnection(remoteId, isInitiator) {
+            if (peerConnections[remoteId]) {
+                console.warn(`ارتباط با ${remoteId} از قبل وجود دارد.`);
+                return;
+            }
+            console.log(`🤝 ایجاد PeerConnection برای ${remoteId}. آیا ما آغازگر هستیم؟ ${isInitiator}`);
             const pc = new RTCPeerConnection(servers);
             peerConnections[remoteId] = pc;
 
             localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
             pc.ontrack = event => {
-                let audioEl = document.getElementById(`audio-${remoteId}`);
-                if (!audioEl) {
-                    audioEl = document.createElement('audio');
-                    audioEl.id = `audio-${remoteId}`;
-                    audioEl.autoplay = true; // این حالا باید کار کند چون در نتیجه یک کلیک اتفاق افتاده
-                    audioEl.playsInline = true;
-                    remoteAudiosContainer.appendChild(audioEl);
-                }
+                console.log(`🎤 ترک صوتی از ${remoteId} دریافت شد.`);
+                const audioEl = document.createElement('audio');
                 audioEl.srcObject = event.streams[0];
+                audioEl.autoplay = true;
+                audioEl.playsInline = true;
+                remoteAudiosContainer.appendChild(audioEl);
+                audioEl.play().catch(e => console.error("❌ خطا در پخش خودکار صدا: ", e));
             };
 
-            pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { candidate: e.candidate.toJSON() });
+            pc.onicecandidate = e => {
+                if (e.candidate) {
+                    sendSignal(remoteId, { candidate: e.candidate.toJSON() });
+                }
+            };
             
+            pc.onconnectionstatechange = () => {
+                console.log(`[State] وضعیت اتصال با ${remoteId}: ${pc.connectionState}`);
+                if(pc.connectionState === 'connected') {
+                    statusDiv.textContent = 'اتصال برقرار شد! در حال مکالمه...';
+                    statusDiv.style.color = 'green';
+                } else if (pc.connectionState === 'failed') {
+                    statusDiv.textContent = `اتصال با ${remoteId} ناموفق بود.`;
+                    statusDiv.style.color = 'red';
+                    pc.restartIce(); // تلاش برای اتصال مجدد
+                }
+            };
+
             if (isInitiator) {
-                pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => sendSignal(remoteId, { sdp: pc.localDescription }));
+                pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
+                    console.log(`[Offer] Offer ساخته شد. در حال ارسال برای ${remoteId}...`);
+                    sendSignal(remoteId, { sdp: pc.localDescription });
+                });
             }
         }
 
         async function sendSignal(toId, data) {
+            console.log(`📤 ارسال سیگنال به ${toId}:`, data);
             await addDoc(collection(db, 'signals'), { to: toId, from: localId, ...data });
         }
 
         const hangup = async () => {
-            Object.values(peerConnections).forEach(pc => pc.close());
-            if (localStream) localStream.getTracks().forEach(track => track.stop());
-            remoteAudiosContainer.innerHTML = '';
-            userList.innerHTML = '';
+            console.log("--- 🔴 دکمه خروج کلیک شد ---");
             firestoreUnsubscribes.forEach(unsub => unsub());
             firestoreUnsubscribes = [];
-            if (userDocRef) await deleteDoc(userDocRef);
+
+            Object.values(peerConnections).forEach(pc => pc.close());
             
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+
+            remoteAudiosContainer.innerHTML = '';
+            userList.innerHTML = '';
+
+            if (userDocRef) {
+                await deleteDoc(userDocRef);
+                console.log("👤 کاربر از Firestore حذف شد.");
+                userDocRef = null;
+            }
+
             joinBtn.disabled = false;
             hangupBtn.disabled = true;
             statusDiv.textContent = 'شما از اتاق خارج شدید.';
+            statusDiv.style.color = '#555';
         };
 
         joinBtn.onclick = joinRoom;
         hangupBtn.onclick = hangup;
-        window.addEventListener('beforeunload', () => localStream && hangup());
+        window.addEventListener('beforeunload', () => {
+            if (localStream) hangup();
+        });
     </script>
 </body>
 </html>
