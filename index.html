@@ -3,677 +3,384 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پروژه غول صوتی - چت صوتی یکپارچه</title>
-    
-    <!-- CSS داخلی -->
+    <title>لابی صوتی عمومی (کیفیت استودیویی)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-            direction: rtl; /* برای فارسی */
-            text-align: right;
-            line-height: 1.6;
+        body { font-family: 'Vazirmatn', sans-serif; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader {
+            border: 4px solid rgba(0, 0, 0, .1);
+            border-left-color: #4f46e5;
+            animation: spin 1s linear infinite;
         }
-
-        h1, h2, h3 {
-            color: #0056b3;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5); display: flex;
+            align-items: center; justify-content: center; z-index: 1000;
         }
-
-        div.section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        .modal-content {
+            background: white; padding: 2rem; border-radius: 0.75rem;
+            text-align: center; max-width: 90%; width: 400px;
         }
-
-        button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: 10px; /* برای فاصله بین دکمه‌ها */
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: calc(100% - 150px); /* عرض مناسب */
-            max-width: 300px;
-            box-sizing: border-box; /* برای محاسبه درست padding و border */
-            margin-left: 10px;
-        }
-        
-        #username-input {
-            width: 200px;
-        }
-
-        #login-anon-btn {
-            background-color: #6c757d;
-        }
-        #login-anon-btn:hover {
-            background-color: #5a6268;
-        }
-
-        #logout-btn {
-            background-color: #dc3545;
-        }
-        #logout-btn:hover {
-            background-color: #c82333;
-        }
-        
-        #toggle-mic-btn {
-            background-color: #28a745; /* Green for mic on */
-            margin-left: 0;
-            margin-right: 10px;
-        }
-
-        #room-list, #room-members, #chat-messages {
-            border: 1px solid #ddd;
-            padding: 10px;
-            max-height: 250px;
-            overflow-y: auto;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            list-style: none; /* برای ul */
-            padding-right: 10px; /* برای ul */
-        }
-
-        #room-list div {
-            display: flex;
-            justify-content: space-between;
+        .user-bubble {
+            display: inline-flex;
             align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px dashed #eee;
+            background-color: #eef2ff;
+            color: #4338ca;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin: 0.25rem;
+            transition: box-shadow 0.2s ease-in-out;
         }
-        #room-list div:last-child {
-            border-bottom: none;
+        /* --- PRO UPGRADE: Speaking Indicator Styles --- */
+        .speaking-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #9ca3af; /* Gray when silent */
+            margin-left: 10px; /* For RTL layout */
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 1);
         }
-
-        .chat-message {
-            margin-bottom: 8px;
-            font-size: 0.95em;
+        .is-speaking .speaking-indicator {
+            background-color: #22c55e; /* Green when speaking */
+            animation: pulse 1.5s infinite;
         }
-        .chat-message strong {
-            color: #007bff;
-            margin-left: 5px;
-        }
-        .chat-message span.timestamp {
-            font-size: 0.8em;
-            color: #888;
-            margin-right: 10px;
-        }
-
-        audio {
-            display: none; /* پنهان کردن تگ صوتی، چون فقط برای پخش استفاده می‌شود */
-        }
-
-        #remote-audios {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 600px) {
-            input[type="text"] {
-                width: calc(100% - 20px);
-                max-width: none;
-                margin-left: 0;
-            }
-            button {
-                width: 100%;
-                margin-left: 0;
-                margin-top: 10px;
-            }
-            #room-list div {
-                flex-direction: column;
-                align-items: flex-end;
-            }
-            #room-list div button {
-                width: auto;
-                margin-top: 5px;
-            }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
     </style>
-    
-    <!-- SDK های Firebase -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-analytics.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
-        import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
 
-        // Your web app's Firebase configuration
+    <div class="container mx-auto p-4 max-w-2xl w-full">
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+
+            <div id="room-view">
+                <h1 class="text-2xl md:text-3xl font-bold text-center text-indigo-600 mb-2">لابی عمومی (کیفیت استودیویی)</h1>
+                 <p id="status" class="text-gray-500 text-center mb-6 h-6">در حال اتصال...</p>
+
+                <div class="mb-4">
+                    <h2 class="font-bold text-lg mb-2 text-center">کاربران حاضر</h2>
+                    <div id="users-container" class="min-h-[50px] bg-gray-50 rounded-lg p-2 flex flex-wrap justify-center items-center">
+                        <span id="no-users-text" class="text-gray-400">هنوز کسی اینجا نیست...</span>
+                    </div>
+                </div>
+
+                <div id="audio-container" class="mt-4 space-y-2">
+                    <video id="localAudio" muted autoplay playsinline class="hidden"></video>
+                </div>
+                
+                <div id="loading-spinner" class="loader w-8 h-8 rounded-full mx-auto my-4"></div>
+
+                <div class="mt-8 flex justify-center gap-4">
+                    <button id="hangupBtn" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-transform transform hover:scale-105 hidden">
+                        خروج از لابی
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4 text-xs text-gray-400">
+            ساخته شده با WebRTC و Firebase
+        </div>
+    </div>
+    
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <p id="modal-text" class="mb-4"></p>
+            <button id="modal-close" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">باشه</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, deleteDoc, writeBatch, getDocs, setDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- پیکربندی Firebase شما (پروژه voic-acfa3) ---
+        // لطفا مطمئن شوید که messagingSenderId و appId را از تنظیمات پروژه خود در کنسول Firebase کپی کرده‌اید.
         const firebaseConfig = {
-          apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSI72Htpb7vbAk", // Replace with your actual apiKey
+          apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
           authDomain: "voic-acfa3.firebaseapp.com",
           projectId: "voic-acfa3",
           storageBucket: "voic-acfa3.firebasestorage.app",
-          messagingSenderId: "7797643208",
-          appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd",
-          measurementId: "G-1VQXZKZ6T9"
+          messagingSenderId: "123456789012", // این را با مقدار صحیح از کنسول Firebase خود جایگزین کنید
+          appId: "1:123456789012:web:abcdef1234567890abcdef" // این را با مقدار صحیح از کنسول Firebase خود جایگزین کنید
         };
+        // ---------------------------------------------------
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app); 
-
-        // Export Firebase services (accessible only within this module script)
+        const db = getFirestore(app);
         const auth = getAuth(app);
-        const db = getDatabase(app);
-
-        // UI Elements
-        const authSection = document.getElementById('auth-section');
-        const usernameInput = document.getElementById('username-input');
-        const loginAnonBtn = document.getElementById('login-anon-btn');
-        const userInfo = document.getElementById('user-info');
-        const currentUsernameSpan = document.getElementById('current-username');
-        const logoutBtn = document.getElementById('logout-btn');
-
-        const roomListSection = document.getElementById('room-list-section');
-        const roomListDiv = document.getElementById('room-list');
-        const newRoomNameInput = document.getElementById('new-room-name');
-        const createRoomBtn = document.getElementById('create-room-btn');
-
-        const roomSection = document.getElementById('room-section');
-        const roomTitle = document.getElementById('room-title');
-        const leaveRoomBtn = document.getElementById('leave-room-btn');
-        const toggleMicBtn = document.getElementById('toggle-mic-btn');
-        const roomMembersList = document.getElementById('room-members');
-        const chatMessagesDiv = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chat-input');
-        const sendChatBtn = document.getElementById('send-chat-btn');
-        const remoteAudiosDiv = document.getElementById('remote-audios');
-
-        // Global state
-        let currentUser = null;
-        let currentRoomId = null;
-        let localStream = null;
-        let peerConnections = {}; // {userId: RTCPeerConnection}
-        let userDisplayName = "کاربر ناشناس";
-        let micEnabled = false;
-
-        // --- Firebase Authentication ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                // Load or set username
-                const userRef = ref(db, `users/${user.uid}`);
-                const snapshot = await get(userRef); // Use get() for single read
-                if (snapshot.exists()) {
-                    userDisplayName = snapshot.val().username || `کاربر #${user.uid.substring(0, 5)}`;
-                } else {
-                    userDisplayName = usernameInput.value.trim() || `کاربر #${user.uid.substring(0, 5)}`;
-                    await set(userRef, {
-                        username: userDisplayName,
-                        email: user.email || null, // For anonymous, email is null
-                        lastOnline: Date.now()
-                    });
-                }
-                currentUsernameSpan.textContent = userDisplayName;
-                authSection.style.display = 'none';
-                roomListSection.style.display = 'block';
-                userInfo.style.display = 'flex'; // Use flex for alignment
-                listenToRooms(); // Start listening for rooms
-            } else {
-                currentUser = null;
-                userDisplayName = "کاربر ناشناس";
-                authSection.style.display = 'block';
-                roomListSection.style.display = 'none';
-                roomSection.style.display = 'none';
-                userInfo.style.display = 'none';
-                usernameInput.value = ''; // Clear username input on logout
-            }
-        });
-
-        loginAnonBtn.addEventListener('click', () => {
-            signInAnonymously(auth).catch(error => {
-                console.error("خطا در ورود ناشناس:", error);
-                alert("خطا در ورود: " + error.message);
-            });
-        });
-
-        logoutBtn.addEventListener('click', async () => {
-            if (currentRoomId) {
-                await leaveRoom();
-            }
-            await signOut(auth);
-        });
-
-        // --- Room Management ---
-        const listenToRooms = () => {
-            const roomsRef = ref(db, 'rooms');
-            onValue(roomsRef, (snapshot) => {
-                roomListDiv.innerHTML = '';
-                snapshot.forEach((childSnapshot) => {
-                    const room = childSnapshot.val();
-                    const roomId = childSnapshot.key;
-                    if (room.status === 'active') {
-                        const roomDiv = document.createElement('div');
-                        roomDiv.innerHTML = `<span>${room.name}</span> <button data-room-id="${roomId}">ورود</button>`;
-                        roomDiv.querySelector('button').addEventListener('click', () => joinRoom(roomId, room.name));
-                        roomListDiv.appendChild(roomDiv);
-                    }
-                });
-            });
-        };
-
-        createRoomBtn.addEventListener('click', async () => {
-            const roomName = newRoomNameInput.value.trim();
-            if (roomName && currentUser) {
-                const newRoomRef = push(ref(db, 'rooms'));
-                await set(newRoomRef, {
-                    name: roomName,
-                    creatorId: currentUser.uid,
-                    createdAt: Date.now(),
-                    status: 'active'
-                });
-                newRoomNameInput.value = '';
-                joinRoom(newRoomRef.key, roomName);
-            } else {
-                alert("لطفاً نام اتاق را وارد کنید.");
-            }
-        });
-
-        const joinRoom = async (roomId, roomName) => {
-            currentRoomId = roomId;
-            roomTitle.textContent = `اتاق: ${roomName}`;
-            roomListSection.style.display = 'none';
-            roomSection.style.display = 'block';
-
-            // Add current user to room members
-            const memberRef = ref(db, `rooms/${currentRoomId}/members/${currentUser.uid}`);
-            const roomCreatorSnapshot = await get(ref(db, `rooms/${currentRoomId}/creatorId`));
-            const isCreator = currentUser.uid === roomCreatorSnapshot.val();
-
-            await set(memberRef, {
-                username: userDisplayName,
-                joinedAt: Date.now(),
-                microphoneOn: micEnabled, // Initial state
-                isCreator: isCreator
-            });
-
-            // Start listening to room members and chat messages
-            listenToRoomMembers(currentRoomId);
-            listenToChatMessages(currentRoomId);
-            startWebRTC(); // Initialize WebRTC for the room
-        };
-
-        leaveRoomBtn.addEventListener('click', leaveRoom);
-
-        async function leaveRoom() {
-            if (!currentUser || !currentRoomId) return;
-
-            // Remove user from room members
-            await remove(ref(db, `rooms/${currentRoomId}/members/${currentUser.uid}`));
-
-            // Stop all WebRTC connections
-            for (const peerId in peerConnections) {
-                peerConnections[peerId].close();
-                delete peerConnections[peerId];
-                document.getElementById(`audio-${peerId}`)?.remove();
-            }
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            micEnabled = false;
-            toggleMicBtn.textContent = 'میکروفون روشن';
-            toggleMicBtn.style.backgroundColor = '#28a745'; // Green
-
-            currentRoomId = null;
-            roomSection.style.display = 'none';
-            roomListSection.style.display = 'block';
-            roomMembersList.innerHTML = '';
-            chatMessagesDiv.innerHTML = '';
-            remoteAudiosDiv.innerHTML = '';
-        }
-
-        const listenToRoomMembers = (roomId) => {
-            const membersRef = ref(db, `rooms/${roomId}/members`);
-            onValue(membersRef, (snapshot) => {
-                roomMembersList.innerHTML = '';
-                const currentMembers = new Set();
-                snapshot.forEach((childSnapshot) => {
-                    const member = childSnapshot.val();
-                    const memberId = childSnapshot.key;
-                    currentMembers.add(memberId);
-                    const memberLi = document.createElement('li');
-                    memberLi.textContent = `${member.username} ${member.microphoneOn ? '(میکروفون روشن)' : ''}`;
-                    if (member.isCreator) {
-                        memberLi.textContent += ' (سازنده)';
-                    }
-                    roomMembersList.appendChild(memberLi);
-
-                    // Manage WebRTC connections based on members
-                    if (memberId !== currentUser.uid && !peerConnections[memberId]) {
-                        createPeerConnection(memberId);
-                    }
-                });
-
-                // Close connections for users who left
-                for (const peerId in peerConnections) {
-                    if (!currentMembers.has(peerId) && peerId !== currentUser.uid) {
-                        console.log(`Closing peer connection with ${peerId} (left room)`);
-                        peerConnections[peerId].close();
-                        delete peerConnections[peerId];
-                        document.getElementById(`audio-${peerId}`)?.remove();
-                    }
-                }
-            });
-        };
-
-        // --- Chat Messaging ---
-        sendChatBtn.addEventListener('click', async () => {
-            const chatText = chatInput.value.trim();
-            if (chatText && currentUser && currentRoomId) {
-                await push(ref(db, `rooms/${currentRoomId}/chatMessages`), {
-                    senderId: currentUser.uid,
-                    senderName: userDisplayName,
-                    text: chatText,
-                    timestamp: Date.now()
-                });
-                chatInput.value = '';
-            }
-        });
-
-        // Allow sending message with Enter key
-        chatInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                sendChatBtn.click();
-            }
-        });
-
-        const listenToChatMessages = (roomId) => {
-            const chatRef = ref(db, `rooms/${roomId}/chatMessages`);
-            onValue(chatRef, (snapshot) => {
-                chatMessagesDiv.innerHTML = '';
-                snapshot.forEach((childSnapshot) => {
-                    const msg = childSnapshot.val();
-                    const msgDiv = document.createElement('div');
-                    msgDiv.classList.add('chat-message');
-                    const messageDate = new Date(msg.timestamp);
-                    const timeString = messageDate.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-                    msgDiv.innerHTML = `<strong>${msg.senderName}:</strong> ${msg.text} <span class="timestamp">${timeString}</span>`;
-                    chatMessagesDiv.appendChild(msgDiv);
-                });
-                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Auto-scroll
-            });
-        };
-
-        // --- WebRTC Core Logic ---
-        toggleMicBtn.addEventListener('click', async () => {
-            if (!localStream) {
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    micEnabled = true;
-                    toggleMicBtn.textContent = 'میکروفون خاموش';
-                    toggleMicBtn.style.backgroundColor = '#dc3545'; // Red
-
-                    // Add tracks to existing peer connections
-                    for (const peerId in peerConnections) {
-                        localStream.getTracks().forEach(track => {
-                            peerConnections[peerId].addTrack(track, localStream);
-                        });
-                    }
-                } catch (error) {
-                    console.error("Error accessing microphone:", error);
-                    alert("خطا در دسترسی به میکروفون. لطفاً اجازه دسترسی بدهید.");
-                    micEnabled = false;
-                }
-            } else {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-                micEnabled = false;
-                toggleMicBtn.textContent = 'میکروفون روشن';
-                toggleMicBtn.style.backgroundColor = '#28a745'; // Green
-
-                // Remove tracks from peer connections
-                for (const peerId in peerConnections) {
-                    const pc = peerConnections[peerId];
-                    pc.getSenders().forEach(sender => {
-                        if (sender.track && sender.track.kind === 'audio') {
-                            pc.removeTrack(sender);
-                        }
-                    });
-                }
-            }
-            // Update microphone status in Firebase
-            if (currentUser && currentRoomId) {
-                update(ref(db, `rooms/${currentRoomId}/members/${currentUser.uid}`), { microphoneOn: micEnabled });
-            }
-        });
-
-        async function startWebRTC() {
-            // Initial setup: get local audio stream if mic is already enabled
-            if (micEnabled && !localStream) {
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    // No need to add to PC here, members listener will create PCs and add streams
-                } catch (error) {
-                    console.error("Error getting initial microphone access:", error);
-                    micEnabled = false;
-                    toggleMicBtn.textContent = 'میکروفون روشن';
-                    toggleMicBtn.style.backgroundColor = '#28a745'; // Green
-                }
-            }
-
-            // This listener handles incoming signals from other users
-            // Use once('value') to fetch initial data and then listen for changes.
-            // For active signaling, onValue is correct.
-            const signalsRef = ref(db, `rooms/${currentRoomId}/peerSignals`);
-            onValue(signalsRef, async (snapshot) => {
-                if (!currentUser) return; // Ensure user is authenticated
-
-                snapshot.forEach(async (childSnapshot) => {
-                    const peerId = childSnapshot.key;
-                    if (peerId === currentUser.uid) return; // Don't process our own signals
-
-                    const peerSignalData = childSnapshot.val();
-                    if (!peerSignalData) return; // No data yet
-
-                    if (!peerConnections[peerId]) {
-                        // This case is handled by the member listener now.
-                        // But good to have a fallback or warning.
-                        console.warn(`Peer connection for ${peerId} not yet established by member listener.`);
-                        return; 
-                    }
-                    const pc = peerConnections[peerId];
-
-                    try {
-                        if (peerSignalData.offer && pc.signalingState !== 'have-local-offer') { // Prevent re-processing offers we sent
-                            console.log(`[WebRTC] Received OFFER from ${peerId}`);
-                            await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: peerSignalData.offer }));
-                            const answer = await pc.createAnswer();
-                            await pc.setLocalDescription(answer);
-                            // Send answer back
-                            await update(ref(db, `rooms/${currentRoomId}/peerSignals/${currentUser.uid}`), {
-                                answer: answer.sdp,
-                                lastSignalTime: Date.now()
-                            });
-                            // Clear the offer after processing
-                            await remove(ref(db, `rooms/${currentRoomId}/peerSignals/${peerId}/offer`));
-                        }
-
-                        if (peerSignalData.answer && pc.signalingState !== 'stable') { // Only process answer if not already stable
-                            console.log(`[WebRTC] Received ANSWER from ${peerId}`);
-                            await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: peerSignalData.answer }));
-                            // Clear the answer after processing
-                            await remove(ref(db, `rooms/${currentRoomId}/peerSignals/${peerId}/answer`));
-                        }
-
-                        // Process ICE candidates
-                        if (peerSignalData.candidates) {
-                            const candidatesToRemove = [];
-                            for (const candidateId in peerSignalData.candidates) {
-                                const candidate = peerSignalData.candidates[candidateId];
-                                try {
-                                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                                    candidatesToRemove.push(candidateId);
-                                } catch (e) {
-                                    if (!pc.remoteDescription) {
-                                        console.warn('Remote description not set yet for candidate:', candidate);
-                                    } else {
-                                        console.error('Error adding received ICE candidate:', e, candidate);
-                                    }
-                                }
-                            }
-                            // Remove processed candidates
-                            if (candidatesToRemove.length > 0) {
-                                const updates = {};
-                                candidatesToRemove.forEach(id => {
-                                    updates[id] = null;
-                                });
-                                await update(ref(db, `rooms/${currentRoomId}/peerSignals/${peerId}/candidates`), updates);
-                            }
-                        }
-                    } catch (error) {
-                        console.error(`Error processing signal from ${peerId}:`, error);
-                    }
-                });
-            });
-        }
-
-        function createPeerConnection(peerId) {
-            if (peerConnections[peerId]) return;
-
-            console.log(`Creating new RTCPeerConnection for ${peerId}`);
-            const pc = new RTCPeerConnection({
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    // Add more STUN/TURN servers for robustness in production.
-                    // Example: { urls: 'turn:your.turn.server.com:3478', username: 'user', credential: 'password' }
-                ]
-            });
-
-            peerConnections[peerId] = pc;
-
-            // Add local stream to the peer connection if available
-            if (localStream) {
-                localStream.getTracks().forEach(track => {
-                    pc.addTrack(track, localStream);
-                });
-            }
-
-            // --- Event Handlers for PeerConnection ---
-            pc.onicecandidate = async (event) => {
-                if (event.candidate) {
-                    console.log(`[WebRTC] Sending ICE candidate to ${peerId}`);
-                    // Push candidate to Firebase
-                    await push(ref(db, `rooms/${currentRoomId}/peerSignals/${currentUser.uid}/candidates`), {
-                        candidate: event.candidate.candidate,
-                        sdpMid: event.candidate.sdpMid,
-                        sdpMLineIndex: event.candidate.sdpMLineIndex,
-                    });
-                    await update(ref(db, `rooms/${currentRoomId}/peerSignals/${currentUser.uid}`), { lastSignalTime: Date.now() });
-                }
-            };
-
-            pc.ontrack = (event) => {
-                console.log(`[WebRTC] Received remote stream from ${peerId}`);
-                const audioEl = document.getElementById(`audio-${peerId}`) || document.createElement('audio');
-                audioEl.id = `audio-${peerId}`;
-                audioEl.autoplay = true;
-                audioEl.controls = false; // Hide controls
-                if (!audioEl.srcObject) { // Prevent setting srcObject multiple times
-                    audioEl.srcObject = event.streams[0];
-                }
-                remoteAudiosDiv.appendChild(audioEl);
-            };
-
-            pc.onnegotiationneeded = async () => {
-                try {
-                    // This is where we create and send the offer
-                    console.log(`[WebRTC] Negotiation needed for ${peerId}, creating offer.`);
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-                    // Send offer to Firebase
-                    await update(ref(db, `rooms/${currentRoomId}/peerSignals/${currentUser.uid}`), {
-                        offer: offer.sdp,
-                        lastSignalTime: Date.now()
-                    });
-                } catch (error) {
-                    console.error(`Error during onnegotiationneeded for ${peerId}:`, error);
-                }
-            };
-
-            pc.oniceconnectionstatechange = () => {
-                console.log(`ICE connection state for ${peerId}:`, pc.iceConnectionState);
-                if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
-                    console.warn(`Connection with ${peerId} failed or disconnected.`);
-                    // Depending on your app logic, you might want to re-negotiate or clean up.
-                }
-            };
-
-            pc.onconnectionstatechange = () => {
-                console.log(`PeerConnection state for ${peerId}:`, pc.connectionState);
-                if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
-                    console.log(`Peer connection with ${peerId} has ended.`);
-                    if (peerConnections[peerId]) {
-                        peerConnections[peerId].close();
-                        delete peerConnections[peerId];
-                        document.getElementById(`audio-${peerId}`)?.remove();
-                    }
-                }
-            };
-        }
-    </script>
-</head>
-<body>
-    <div id="auth-section" class="section">
-        <h1>به غول صوتی خوش آمدید!</h1>
-        <input type="text" id="username-input" placeholder="نام کاربری (اختیاری)">
-        <button id="login-anon-btn">ورود ناشناس</button>
-        <div id="user-info" style="display: none; align-items: center; margin-top: 15px;">
-            <p style="margin: 0; margin-left: 10px;">خوش آمدید، <span id="current-username" style="font-weight: bold;"></span>!</p>
-            <button id="logout-btn">خروج</button>
-        </div>
-    </div>
-
-    <div id="room-list-section" class="section" style="display: none;">
-        <h2>اتاق‌های موجود</h2>
-        <div id="room-list"></div>
-        <input type="text" id="new-room-name" placeholder="نام اتاق جدید">
-        <button id="create-room-btn">ایجاد اتاق</button>
-    </div>
-
-    <div id="room-section" class="section" style="display: none;">
-        <h2 id="room-title"></h2>
-        <button id="leave-room-btn">ترک اتاق</button>
-        <button id="toggle-mic-btn">میکروفون روشن</button>
-
-        <h3>اعضای اتاق:</h3>
-        <ul id="room-members"></ul>
-
-        <h3>چت متنی:</h3>
-        <div id="chat-messages"></div>
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="chat-input" placeholder="پیام شما...">
-            <button id="send-chat-btn">ارسال</button>
-        </div>
+        const appId = firebaseConfig.projectId; // appId از projectId گرفته می‌شود و در مسیر Firestore استفاده می‌شود
         
-        <!-- فضایی برای پخش صوت کاربران دیگر -->
-        <h3>صوت کاربران دیگر:</h3>
-        <div id="remote-audios">
-            <!-- Audio tags will be dynamically added here -->
-        </div>
-    </div>
+        const servers = { iceServers: [ { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] } ] };
+        const publicRoomId = "multi-user-lobby-pro-hq";
+        let localStream, myId;
+        let peerConnections = {};
+        let membersUnsubscribe, signalsUnsubscribe;
+
+        const hangupBtn = document.getElementById('hangupBtn');
+        const localAudio = document.getElementById('localAudio');
+        const statusText = document.getElementById('status');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const usersContainer = document.getElementById('users-container');
+        const noUsersText = document.getElementById('no-users-text');
+        const modal = document.getElementById('modal');
+        const modalText = document.getElementById('modal-text');
+        const modalClose = document.getElementById('modal-close');
+
+        function showModal(message) { modalText.innerText = message; modal.classList.remove('hidden'); }
+        modalClose.onclick = () => modal.classList.add('hidden');
+        
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                myId = user.uid;
+                joinPublicLobby();
+            } else {
+                signInAnonymously(auth).catch(err => showModal(`Authentication Error: ${err.message}`));
+            }
+        });
+
+        async function joinPublicLobby() {
+            try {
+                const audioConstraints = {
+                    audio: {
+                        echoCancellation: true, noiseSuppression: true, autoGainControl: true,
+                        channelCount: 2, sampleRate: 48000,
+                    },
+                    video: false,
+                };
+                localStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+                localAudio.srcObject = localStream;
+
+                statusText.innerText = 'در حال پیوستن به لابی...';
+                
+                // مسیر صحیح در Firestore بر اساس کد شما
+                const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+                const membersCol = collection(roomRef, "members");
+                // setDoc برای اضافه کردن/به‌روزرسانی سند عضو با ID فعلی کاربر
+                await setDoc(doc(membersCol, myId), { joinedAt: Date.now() });
+
+                membersUnsubscribe = onSnapshot(membersCol, (snapshot) => {
+                    snapshot.docChanges().forEach(async (change) => {
+                        const remoteId = change.doc.id;
+                        if (remoteId === myId) return;
+
+                        if (change.type === "added") {
+                            statusText.innerText = `کاربر ${remoteId.substring(0,6)} وارد شد.`;
+                            peerConnections[remoteId] = createPeerConnection(remoteId);
+                            if (myId < remoteId) await sendOffer(remoteId);
+                        } else if (change.type === "removed") {
+                           statusText.innerText = `کاربر ${remoteId.substring(0,6)} خارج شد.`;
+                           closeConnection(remoteId);
+                        }
+                        updateUsersUI();
+                    });
+                     updateUsersUI();
+                });
+                
+                const signalsCol = collection(roomRef, "signals");
+                const q = query(signalsCol, where("to", "==", myId)); // فقط سیگنال‌های مربوط به خود را بخوان
+                signalsUnsubscribe = onSnapshot(q, (snapshot) => {
+                    (async () => {
+                        for (const document of snapshot.docs) {
+                            const signalData = document.data();
+                            const remoteId = signalData.from;
+                            const pc = peerConnections[remoteId];
+
+                            if (!pc) { await deleteDoc(document.ref); continue; }
+
+                            try {
+                                if (signalData.offer && pc.signalingState === 'stable') {
+                                    await pc.setRemoteDescription(new RTCSessionDescription(signalData.offer));
+                                    const answer = await pc.createAnswer();
+                                    const hqAnswer = setAudioQuality(answer);
+                                    await pc.setLocalDescription(hqAnswer);
+                                    await sendSignal(remoteId, { answer: hqAnswer });
+                                } else if (signalData.answer && pc.signalingState === 'have-local-offer') {
+                                    await pc.setRemoteDescription(new RTCSessionDescription(signalData.answer));
+                                } else if (signalData.iceCandidate && pc.remoteDescription) {
+                                    await pc.addIceCandidate(new RTCIceCandidate(signalData.iceCandidate));
+                                }
+                            } catch (err) { console.error("Signal Processing Error:", err); }
+                            // پس از پردازش سیگنال، آن را حذف کن
+                            await deleteDoc(document.ref);
+                        }
+                    })();
+                });
+                
+                loadingSpinner.classList.add('hidden');
+                hangupBtn.classList.remove('hidden');
+
+            } catch (err) {
+                showModal(`خطای ورود به لابی: ${err.message}`);
+                statusText.innerText = "خطا در اتصال";
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+        
+        function setAudioQuality(sdpObject) {
+            let sdp = sdpObject.sdp;
+            // --- PRO UPGRADE: More advanced Opus parameters ---
+            const opusParams = 'useinbandfec=1;stereo=1;sprop-stereo=1;usedtx=0;maxaveragebitrate=128000;maxplaybackrate=48000';
+            const opusRegex = /a=rtpmap:(\d+) opus\/48000\/2/i;
+            const match = sdp.match(opusRegex);
+            if (match) {
+                const payloadType = match[1];
+                const fmtpRegex = new RegExp(`a=fmtp:${payloadType} .*`, 'i');
+                const newFmtpLine = `a=fmtp:${payloadType} ${opusParams}`;
+                if (sdp.match(fmtpRegex)) {
+                    sdp = sdp.replace(fmtpRegex, newFmtpLine);
+                } else {
+                    sdp = sdp.replace(match[0], `${match[0]}\r\n${newFmtpLine}`);
+                }
+            }
+            return { type: sdpObject.type, sdp };
+        }
+        
+        // --- PRO UPGRADE: Audio visualizer for speaking indicators ---
+        function setupAudioVisualizer(stream, remoteId) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            peerConnections[remoteId].visualizer = { audioContext, animationFrameId: null };
+
+            const draw = () => {
+                const userBubble = document.getElementById(`user-${remoteId}`);
+                if (!userBubble) {
+                    cancelAnimationFrame(peerConnections[remoteId].visualizer.animationFrameId);
+                    return;
+                }
+
+                analyser.getByteFrequencyData(dataArray);
+                let sum = dataArray.reduce((a, b) => a + b, 0);
+                let average = sum / bufferLength;
+                
+                if (average > 20) { // Threshold for speaking
+                    userBubble.classList.add('is-speaking');
+                } else {
+                    userBubble.classList.remove('is-speaking');
+                }
+                
+                peerConnections[remoteId].visualizer.animationFrameId = requestAnimationFrame(draw);
+            };
+            draw();
+        }
+
+        function createPeerConnection(remoteId) {
+            const pc = new RTCPeerConnection(servers);
+            
+            pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { iceCandidate: e.candidate.toJSON() });
+
+            pc.ontrack = event => {
+                let remoteAudio = document.getElementById(`audio-${remoteId}`);
+                if (!remoteAudio) {
+                    remoteAudio = document.createElement('audio');
+                    remoteAudio.id = `audio-${remoteId}`;
+                    remoteAudio.autoplay = true;
+                    remoteAudio.playsInline = true;
+                    document.getElementById('audio-container').appendChild(remoteAudio);
+                    remoteAudio.srcObject = event.streams[0];
+                    setupAudioVisualizer(event.streams[0], remoteId); // Setup visualizer on track
+                }
+            };
+
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            return pc;
+        }
+
+        async function sendOffer(remoteId) {
+            const pc = peerConnections[remoteId];
+            if (!pc) return;
+            try {
+                const offer = await pc.createOffer();
+                const hqOffer = setAudioQuality(offer);
+                await pc.setLocalDescription(hqOffer);
+                await sendSignal(remoteId, { offer: hqOffer });
+            } catch (err) { console.error("Offer Error:", err); }
+        }
+        
+        async function sendSignal(toId, data) {
+            const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+            const signalsCol = collection(roomRef, "signals");
+            await addDoc(signalsCol, { ...data, from: myId, to: toId });
+        }
+        
+        function closeConnection(remoteId) {
+            const pcData = peerConnections[remoteId];
+            if (pcData) {
+                if (pcData.visualizer) {
+                    cancelAnimationFrame(pcData.visualizer.animationFrameId);
+                    pcData.visualizer.audioContext.close();
+                }
+                pcData.close();
+                delete peerConnections[remoteId];
+            }
+            document.getElementById(`audio-${remoteId}`)?.remove();
+        }
+
+        function updateUsersUI() {
+            const memberIds = new Set(Object.keys(peerConnections));
+            if (myId) memberIds.add(myId);
+            
+            usersContainer.innerHTML = '';
+            
+            if (memberIds.size <= 1) { // اگر فقط خود کاربر هستیم یا هیچکس نیست
+                 usersContainer.appendChild(noUsersText);
+            } else if (usersContainer.contains(noUsersText)) {
+                 noUsersText.remove();
+            }
+
+            memberIds.forEach(id => {
+                 const userBubble = document.createElement('div');
+                 userBubble.className = 'user-bubble';
+                 userBubble.id = `user-${id}`;
+                 
+                 const indicator = document.createElement('div');
+                 indicator.className = 'speaking-indicator';
+
+                 const nameSpan = document.createElement('span');
+                 nameSpan.textContent = `کاربر ${id.substring(0, 6)}...` + (id === myId ? ' (شما)' : '');
+                 
+                 userBubble.appendChild(nameSpan);
+                 userBubble.appendChild(indicator);
+                 usersContainer.appendChild(userBubble);
+            });
+        }
+        
+        async function hangup() {
+            if (myId) {
+                const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+                // حذف سند عضویت خود کاربر
+                await deleteDoc(doc(collection(roomRef, "members"), myId)).catch(console.error);
+            }
+
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            Object.keys(peerConnections).forEach(id => closeConnection(id));
+            peerConnections = {};
+
+            if (membersUnsubscribe) membersUnsubscribe();
+            if (signalsUnsubscribe) signalsUnsubscribe();
+
+            window.location.reload(); // صفحه را رفرش می‌کند تا وضعیت اولیه برگردد
+        }
+
+        hangupBtn.onclick = hangup;
+        window.addEventListener('beforeunload', hangup);
+
+    </script>
 </body>
 </html>
