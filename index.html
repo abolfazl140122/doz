@@ -3,975 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بازی دوز پیشرفته با موسیقی</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <title>چت روم صوتی عمومی</title>
+
+    <!-- CSS یکپارچه شده در فایل HTML -->
     <style>
         body {
-            font-family: 'Vazirmatn', sans-serif;
-            background-color: #0b1120; /* Darker Slate/Navy */
-            color: #e2e8f0; /* text-slate-200 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center; /* Ensure vertical centering */
-            min-height: 100vh;
-            margin: 0;
-            padding: 1rem;
-            overflow-x: hidden;
-        }
-        .container-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            width: 100%;
-            flex-grow: 1;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
         }
         .container {
-            width: 100%;
-            max-width: 680px; /* Max width for the game container */
-            background-color: rgba(23, 37, 60, 0.88); /* Darker, slightly transparent */
-            padding: 20px;
-            border-radius: 18px; /* More rounded */
-            box-shadow: 0 12px 35px rgba(0,0,0,0.7);
-            border: 1px solid #2c3e50; /* Darker border */
-        }
-        .board-outer-container { /* New container to help center the board itself */
-            display: flex;
-            justify-content: center; /* Horizontally center the board-container */
-            width: 100%;
-            margin-bottom: 20px; /* Space below board */
-        }
-        .board-container {
-            position: relative;
-            /* margin removed as board-outer-container handles it */
-        }
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            width: 300px; /* Fixed width for consistent sizing */
-            height: 300px;/* Fixed height */
-            perspective: 1000px;
-            margin: 0 auto; /* Center board within its direct parent if parent is wider */
-        }
-        @media (max-width: 480px) {
-            .board {
-                width: clamp(240px, 75vw, 280px); /* Responsive width with min/max */
-                height: clamp(240px, 75vw, 280px);
-                gap: 10px;
-            }
-             .cell { font-size: 2.8rem !important; }
-             .controls-grid { grid-template-columns: 1fr; }
-        }
-        .cell {
-            background-color: #2c3e50; /* Darker cell */
-            border: 2px solid #34495e; /* Slightly lighter border for contrast */
+            background-color: #fff;
+            padding: 40px;
             border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.5rem;
-            font-weight: bold;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        p {
+            line-height: 1.6;
+        }
+        .buttons {
+            margin: 20px 0;
+        }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.3), 0 5px 8px rgba(0,0,0,0.4);
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            margin: 0 10px;
+            transition: background-color 0.3s, transform 0.2s;
         }
-        .cell:hover:not(.occupied) {
-            background-color: #34495e;
-            transform: scale(1.08) rotateY(7deg);
-            box-shadow: inset 0 0 8px rgba(0,0,0,0.2), 0 8px 12px rgba(0,0,0,0.5);
+        button:hover:not(:disabled) {
+            background-color: #1558b8;
+            transform: translateY(-2px);
         }
-        .cell.occupied { cursor: not-allowed; }
-        .cell.x { color: #29b6f6; /* Lighter Blue */ text-shadow: 0 0 18px #29b6f6, 0 0 8px #fff; }
-        .cell.o { color: #ffee58; /* Lighter Yellow */ text-shadow: 0 0 18px #ffee58, 0 0 8px #fff; }
-        .cell.win-animation { background-color: #00897b; /* Darker Teal */ animation: winPulse 0.8s infinite alternate; }
-        .cell.hint-cell {
-            background-color: rgba(76, 175, 80, 0.3) !important; /* Greenish hint */
-            border-color: #4CAF50 !important;
-            box-shadow: 0 0 15px #4CAF50;
-            animation: hintPulse 1s infinite alternate;
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
-        @keyframes hintPulse { from { opacity: 0.6; transform: scale(1); } to { opacity: 1; transform: scale(1.05); } }
-        @keyframes winPulse {
-            from { transform: scale(1); box-shadow: inset 0 0 5px rgba(0,0,0,0.3), 0 0 8px 4px rgba(0, 137, 123, 0.6); }
-            to { transform: scale(1.15); box-shadow: inset 0 0 8px rgba(0,0,0,0.2), 0 0 20px 10px rgba(0, 137, 123, 0.8); }
+        #hangupBtn {
+            background-color: #d93025;
         }
-        .winning-line-canvas { position: absolute; top: 0; left: 0; pointer-events: none; display: none; }
-
-        .status-bar { margin-bottom: 15px; text-align: center; }
-        .status-text {
-            font-size: 1.7rem; font-weight: bold; color: #bdc3c7; /* Lighter gray */
-            min-height: 3rem; transition: color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
-            opacity: 0; transform: translateY(10px);
+        #hangupBtn:hover:not(:disabled) {
+            background-color: #b5281e;
         }
-        .status-text.visible { opacity: 1; transform: translateY(0); }
-        .status-text.win-x { color: #29b6f6; }
-        .status-text.win-o { color: #ffee58; }
-        .status-text.draw { color: #ecf0f1; /* Very light gray */ }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Adjusted minmax */
-            gap: 15px; margin-bottom: 20px; background-color: #1c2a3s; /* Darker controls bg */
-            padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #555;
+            min-height: 24px;
         }
-        .control-group { display: flex; flex-direction: column; gap: 8px; }
-        label { font-size: 0.9rem; color: #bdc3c7; font-weight: 600; }
-        select, button, input[type="range"] {
-            padding: 10px 12px; border-radius: 8px; border: 1px solid #34495e;
-            background-color: #2c3e50; color: #ecf0f1; font-size: 0.95rem; cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        #remote-audios video,
+        #remote-audios audio {
+            /* تگ‌های صوتی را مخفی می‌کنیم چون نیازی به دیدن کنترلر آن‌ها نیست */
+            display: none;
         }
-        select:hover, button:hover { background-color: #34495e; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        button:active { transform: translateY(0); background-color: #41586e; }
-        .primary-button { background-color: #2980b9; border-color: #206694; } /* Peter River Blue */
-        .primary-button:hover { background-color: #206694; }
-        .secondary-button { background-color: #c0392b; border-color: #a53125; } /* Pomegranate Red */
-        .secondary-button:hover { background-color: #a53125; }
-        .tertiary-button { background-color: #27ae60; border-color: #1f8a4c; } /* Nephritis Green */
-        .tertiary-button:hover { background-color: #1f8a4c; }
-        .sound-button.muted, .music-button.muted { background-color: #7f8c8d; /* Asbestos Gray */ }
-        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #34495e; outline: none; opacity: 0.7; transition: opacity .2s; margin-top: 5px; }
-        input[type="range"]:hover { opacity: 1; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #29b6f6; border-radius: 50%; cursor: pointer; }
-        input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; background: #29b6f6; border-radius: 50%; cursor: pointer; border: none; }
-
-        .scoreboard { display: flex; justify-content: space-around; margin-bottom: 20px; background-color: #1c2a3s; padding: 15px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-        .score-item { text-align: center; font-size: 1rem; }
-        .score-item span { display: block; font-size: 1.5rem; font-weight: bold; margin-top: 5px; }
-        .score-player1 { color: #29b6f6; }
-        .score-player2 { color: #ffee58; }
-        .score-draws { color: #bdc3c7; }
-
-        .chat-area { margin: 20px auto 0 auto; width: 100%; max-width: 500px; background-color: #1c2a3s; border-radius: 10px; padding: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.4); }
-        .chat-title { font-size: 1.1rem; font-weight: bold; color: #bdc3c7; margin-bottom: 10px; text-align: center; }
-        .chat-messages { height: 130px; overflow-y: auto; border: 1px solid #34495e; border-radius: 8px; padding: 10px; background-color: #0b1120; }
-        .chat-message { margin-bottom: 8px; padding: 6px 10px; border-radius: 6px; font-size: 0.9rem; line-height: 1.5; }
-        .chat-message.ai { color: #ffee58; background-color: rgba(52, 73, 94, 0.7); text-align: right; }
-        .chat-message.system { color: #9b59b6; background-color: rgba(44, 62, 80, 0.7); font-style: italic; } /* Amethyst Purple */
-        .chat-message.player-info { color: #1abc9c; background-color: rgba(11, 17, 32, 0.7); text-align: left; } /* Turquoise */
-
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; }
-        .modal-content { background-color: #1c2a3s; padding: 30px; border: 1px solid #34495e; border-radius: 12px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.6); animation: fadeInModal 0.4s ease-out; }
-        @keyframes fadeInModal { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .modal-title { font-size: 2rem; margin-bottom: 15px; }
-        .modal-message { font-size: 1.1rem; color: #ecf0f1; margin-bottom: 25px; }
+        .user-count {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
-    <div class="container-wrapper">
-        <div class="container">
-            <h1 class="text-4xl font-bold text-center mb-6 text-sky-400">دوز اعماق فضا</h1>
 
-            <div class="controls-grid">
-                <div class="control-group">
-                    <label for="gameMode">حالت بازی:</label>
-                    <select id="gameMode">
-                        <option value="pvai">بازیکن مقابل هوش مصنوعی</option>
-                        <option value="pvp">بازیکن مقابل بازیکن</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="difficulty">سطح سختی (هوش مصنوعی):</label>
-                    <select id="difficulty">
-                        <option value="easy">آسان</option>
-                        <option value="medium">متوسط</option>
-                        <option value="hard">سخت (Minimax)</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="player1Symbol">نماد شما (بازیکن ۱):</label>
-                    <select id="player1Symbol">
-                        <option value="X">X</option>
-                        <option value="O">O</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>کنترل صدا:</label>
-                    <div class="flex gap-2">
-                        <button id="soundToggle" class="flex-1">🔊 افکت: روشن</button>
-                        <button id="musicToggle" class="music-button flex-1">🎵 موسیقی: خاموش</button>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label for="musicVolume">ولوم موسیقی:</label>
-                    <input type="range" id="musicVolume" min="0" max="1" step="0.05" value="0.1">
-                </div>
-                 <div class="control-group">
-                    <label>&nbsp;</label> <button id="hintButton" class="tertiary-button">💡 راهنمایی</button>
-                </div>
-                <div class="control-group col-span-full md:col-span-1">
-                     <label>&nbsp;</label> <button id="resetButton" class="secondary-button font-bold py-2 px-4 w-full">
-                        شروع مجدد بازی
-                    </button>
-                </div>
-            </div>
-
-            <div class="scoreboard">
-                <div class="score-item"><span id="player1NameScore">بازیکن ۱ (X)</span><span id="player1Score" class="score-player1">0</span></div>
-                <div class="score-item">مساوی<span id="drawScore" class="score-draws">0</span></div>
-                <div class="score-item"><span id="player2NameScore">هوش مصنوعی (O)</span><span id="player2Score" class="score-player2">0</span></div>
-            </div>
-
-            <div class="status-bar">
-                <p id="statusText" class="status-text">نوبت شما (X)</p>
-            </div>
-
-            <div class="board-outer-container">
-                <div class="board-container">
-                    <div class="board" id="board"></div>
-                    <canvas id="winningLineCanvas" class="winning-line-canvas"></canvas>
-                </div>
-            </div>
-
-
-            <div class="chat-area" id="chatArea">
-                <div class="chat-title">پیام‌رسان بین ستاره‌ای</div>
-                <div class="chat-messages" id="chatMessages"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="gameOverModal" class="modal">
-        <div class="modal-content">
-            <h2 id="modalTitle" class="modal-title"></h2>
-            <p id="modalMessage" class="text-lg"></p>
-            <button id="modalRestartButton" class="primary-button modal-button font-bold py-3 px-6 text-lg">بازی دوباره</button>
-        </div>
-    </div>
-
-    <script>
-        // DOM Elements
-        const boardElement = document.getElementById('board');
-        const statusTextElement = document.getElementById('statusText');
-        const resetButton = document.getElementById('resetButton');
-        const difficultySelect = document.getElementById('difficulty');
-        const gameModeSelect = document.getElementById('gameMode');
-        const player1SymbolSelect = document.getElementById('player1Symbol');
-        const chatMessagesElement = document.getElementById('chatMessages');
-        const chatAreaElement = document.getElementById('chatArea');
-        const soundToggleButton = document.getElementById('soundToggle');
-        const musicToggleButton = document.getElementById('musicToggle');
-        const musicVolumeSlider = document.getElementById('musicVolume');
-        const hintButton = document.getElementById('hintButton');
-
-        const player1ScoreElement = document.getElementById('player1Score');
-        const player2ScoreElement = document.getElementById('player2Score');
-        const drawScoreElement = document.getElementById('drawScore');
-        const player1NameScoreElement = document.getElementById('player1NameScore');
-        const player2NameScoreElement = document.getElementById('player2NameScore');
+    <div class="container">
+        <h1>چت روم صوتی عمومی</h1>
+        <p>با کلیک روی دکمه "ورود به چت" میکروفون شما فعال شده و به اتاق عمومی متصل می‌شوید. هر کاربر جدیدی که وارد شود، به طور خودکار به مکالمه اضافه خواهد شد.</p>
         
-        const winningLineCanvas = document.getElementById('winningLineCanvas');
-        const ctx = winningLineCanvas.getContext('2d');
+        <div class="buttons">
+            <button id="joinBtn">ورود به چت</button>
+            <button id="hangupBtn" disabled>خروج و قطع تماس</button>
+        </div>
 
-        const gameOverModal = document.getElementById('gameOverModal');
-        const modalTitleElement = document.getElementById('modalTitle');
-        const modalMessageElement = document.getElementById('modalMessage');
-        const modalRestartButton = document.getElementById('modalRestartButton');
+        <div id="status">در انتظار اتصال...</div>
+        <div id="user-count-container"></div>
+        
+        <!-- این قسمت برای نگهداری تگ‌های صوتی کاربران دیگر است -->
+        <div id="remote-audios"></div>
+    </div>
 
-        // Game State
-        let boardState = Array(9).fill('');
-        let currentPlayer;
-        let gameActive = true;
-        let currentDifficulty = 'easy';
-        let currentGameMode = 'pvai';
-        let player1Symbol = 'X';
-        let player2Symbol = 'O'; // AI or Player 2
-        let scores = { player1: 0, player2: 0, draws: 0 };
-        let soundEffectsEnabled = true;
-        let musicEnabled = false;
-        let hintCellIndex = -1;
+    <!-- JavaScript یکپارچه شده در فایل HTML -->
+    <script type="module">
+        // ---------------------------------------------------------------------
+        // 1. راه‌اندازی و تنظیم FIREBASE
+        // ---------------------------------------------------------------------
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { 
+            getFirestore, collection, doc, addDoc, onSnapshot, 
+            query, where, deleteDoc, getDocs 
+        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-        // Winning Combinations - Moved to a globally accessible scope
-        const winningCombinations = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-            [0, 4, 8], [2, 4, 6]             // diagonals
-        ];
-
-        // --- Sound & Music Setup (Tone.js) ---
-        const moveSound = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.05, release: 0.1 } }).toDestination();
-        const winSound = new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.5 } }).toDestination();
-        const loseSound = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.3 } }).toDestination();
-        const drawSound = new Tone.Synth({ oscillator: { type: "square" }, envelope: { attack: 0.02, decay: 0.15, sustain: 0.05, release: 0.2 } }).toDestination();
-        const clickSound = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0 } }).toDestination();
-        const hintSound = new Tone.Synth({ oscillator: { type: "pulse", width: 0.3 }, envelope: { attack: 0.01, decay: 0.05, sustain: 0.02, release: 0.1 } }).toDestination();
-
-        const musicVolume = new Tone.Volume(-25).toDestination(); // Start with a lower volume for "dark" music
-        musicVolumeSlider.value = Tone.dbToGain(musicVolume.volume.value);
-
-        // Attempt at a "darker" ambient music piece
-        const backgroundMusic = new Tone.Loop(time => {
-            const synth = new Tone.PolySynth(Tone.AMSynth, { // AMSynth for potentially darker/metallic tones
-                harmonicity: 1.5,
-                detune: 0,
-                oscillator: { type: "sawtooth" },
-                envelope: { attack: 0.2, decay: 0.5, sustain: 0.3, release: 1.2 },
-                modulation: { type: "sine" },
-                modulationEnvelope: { attack: 0.3, decay: 0.1, sustain: 0.8, release: 0.8 }
-            }).connect(musicVolume);
-
-            // Darker, minor key progression (e.g., A minor based)
-            const chords = [
-                ["A2", "C3", "E3"], // Am
-                ["F2", "A2", "C3"], // F
-                ["C2", "E2", "G2"], // C (can sound major, but in context of Am)
-                ["G2", "B2", "D3"]  // G
-            ];
-            const randomChord = chords[Math.floor(Math.random() * chords.length)];
-            
-            synth.triggerAttackRelease(randomChord, "2m", time); // Hold chords longer
-
-            // Add a very low, slow bass note
-            const bassSynth = new Tone.Synth({
-                oscillator: {type: "triangle8"},
-                envelope: {attack: 0.5, decay:1, sustain:0.5, release:1}
-            }).connect(musicVolume);
-            bassSynth.triggerAttackRelease(randomChord[0].replace('2','1').replace('3','1'), "1m", time + 0.1); // Octave down
-
-        }, "4m"); // Loop every 4 measures (slower progression)
-        Tone.Transport.bpm.value = 60; // Slower BPM for darker feel
-
-
-        async function initAudio() {
-            if (Tone.context.state !== 'running') {
-                try {
-                    await Tone.start();
-                    console.log('AudioContext started by Tone.js');
-                } catch (e) {
-                    console.error("Error starting AudioContext:", e);
-                }
-            }
-        }
-        // It's good practice to have a clear user interaction to start audio
-        document.body.addEventListener('click', initAudio, { once: true });
-        musicToggleButton.addEventListener('click', initAudio, { once: true }); // Also for music button
-
-
-        function playSoundEffect(type) {
-            if (!soundEffectsEnabled || !Tone.context || Tone.context.state !== 'running') return;
-            try {
-                const now = Tone.now();
-                switch (type) {
-                    case 'move': moveSound.triggerAttackRelease("C4", "8n", now); break;
-                    case 'win': winSound.triggerAttackRelease("G4", "4n", now); setTimeout(() => winSound.triggerAttackRelease("C5", "4n", now + 0.25), 250); break;
-                    case 'lose': loseSound.triggerAttackRelease("C3", "4n", now); setTimeout(() => loseSound.triggerAttackRelease("G2", "4n", now + 0.15), 150); break;
-                    case 'draw': drawSound.triggerAttackRelease("E4", "8n", now); setTimeout(() => drawSound.triggerAttackRelease("C4", "8n", now + 0.15), 150); break;
-                    case 'click': clickSound.triggerAttackRelease("C2", "32n", now, 0.5); break;
-                    case 'hint': hintSound.triggerAttackRelease("A4", "16n", now); break;
-                }
-            } catch (error) { console.error("Error playing sound effect:", error); }
-        }
-
-        function toggleMusic() {
-            // initAudio(); // Ensure audio context is running - called on body/button click now
-            if (Tone.context.state !== 'running') {
-                console.warn("Audio context not running. Click screen or music button to enable.");
-                // Optionally provide user feedback here if audio isn't starting
-                return;
-            }
-
-            musicEnabled = !musicEnabled;
-            if (musicEnabled) {
-                Tone.Transport.start();
-                backgroundMusic.start(0);
-                musicToggleButton.textContent = "🎵 موسیقی: روشن";
-                musicToggleButton.classList.remove('muted');
-            } else {
-                backgroundMusic.stop();
-                // Tone.Transport.stop(); // Stopping the loop should be enough
-                musicToggleButton.textContent = "🎵 موسیقی: خاموش";
-                musicToggleButton.classList.add('muted');
-            }
-            playSoundEffect('click');
-        }
-
-        musicVolumeSlider.addEventListener('input', (e) => {
-            if (Tone.context.state !== 'running') return;
-            const gainValue = parseFloat(e.target.value);
-            musicVolume.volume.value = Tone.gainToDb(gainValue);
-        });
-
-
-        // --- AI Taunts & Chat --- (Same as previous, can be expanded)
-        const aiTaunts = {
-            startEasy: ["سفینه آماده پرتاب! بیا بازی کنیم.", "در این گستره بی‌کران، شاید بتونی مساوی کنی.", "آماده‌ای برای یه گشت و گذار ساده در کهکشان دوز؟"],
-            startMedium: ["فکر می‌کنی می‌تونی فرمانده این ایستگاه فضایی بشی؟", "حرکاتت رو با دقت انتخاب کن، مثل انتخاب مسیر بین سیارات!", "ببینیم استراتژی کیهانیت چیه!"],
-            startHard: ["تو در مقابل یک هوش مصنوعی پیشرفته قرار گرفتی، از اعماق سحابی‌ها!", "هر حرکت اشتباه، تو رو به افق رویداد شکست نزدیک‌تر می‌کنه.", "آماده‌ای برای یک جنگ تمام عیار ستاره‌ای؟"],
-            playerMoveGeneral: ["حرکت جالبی بود...", "سیگنال دریافت شد. در حال تحلیل...", "اینطوری می‌خوای منظومه رو تسخیر کنی؟ باشه!"],
-            playerGoodMove: ["حرکت هوشمندانه‌ای بود! مثل یک جهش هایپر اسپیس دقیق!", "این یکی رو خوب اومدی!", "چالش خوبی بود، کاپیتان!"],
-            playerBadMove: ["مطمئنی این بهترین مسیر بود؟ فکر کنم به سمت یک میدان سیارکی حرکت کردی!", "شاید بهتر بود با مرکز فرماندهی مشورت می‌کردی!", "این که خیلی قابل پیش‌بینی بود، حتی برای یک ربات درجه ۳!"],
-            aiBlocksWin: ["مسیر پیروزیت توسط سپر دفاعی من مسدود شد!", "راهت رو بستم، مثل یک دیوار انرژی!", "فکر کردی می‌تونی از رادارهای من پنهان بشی؟"],
-            aiAboutToWin: ["فقط یک حرکت تا پیروزی نهایی و تسلط بر این بخش از کهکشان فاصله دارم!", "بازی داره به نفع من تموم می‌شه!", "آماده باش برای تسلیم شدن در برابر قدرت برتر!"],
-            aiWin: ["من پیروز شدم! کهکشان تحت کنترل من است!", "هوش مصنوعی همیشه یک قدم جلوتره، حتی در دورترین نقاط فضا!", "برای شکست دادن من به چیزی بیشتر از شانس نیاز داری."],
-            playerWin: ["شگفت‌انگیزه! تو بردی. تبریک می‌گم، قهرمان کهکشان!", "این بار محاسبات من دقیق نبود. یا شاید هم تو خیلی خوب بودی.", "بازی قابل تحسینی بود. این یک پیروزی درخشان در تاریخچه فضایی ثبت می‌شه!"],
-            draw: ["مساوی شدیم. انگار در این نقطه از فضا به یک بن‌بست استراتژیک رسیدیم.", "هیچکدوم نتونستیم برتری کامل پیدا کنیم. شاید یک اتحاد بهتر باشه؟", "دفعه بعد شاید یکی فرمانروای این قلمرو بشه."],
-            thinking: ["در حال پردازش داده‌های سنسورها و محاسبه بهترین مسیر...", "صبر کن، دارم با کامپیوتر مرکزی مشورت می‌کنم...", "این یکی یکم پیچیده‌ست، مثل رمزگشایی یک پیام بیگانه‌..."],
-            hintUsed: ["از سیستم ناوبری کمکی استفاده کردی؟ اشکال نداره، همه کاپیتان‌های بزرگ گاهی به نقشه نیاز دارن!", "کمک گرفتی؟ خوبه، مهم اینه که به مقصد برسی.", "نقشه راه رو دیدی؟ حالا با قدرت حرکت کن!"]
+        // Your web app's Firebase configuration
+        // نکته: این اطلاعات حساس نیستند و می‌توانند در سمت کلاینت باشند.
+        const firebaseConfig = {
+            apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
+            authDomain: "voic-acfa3.firebaseapp.com",
+            projectId: "voic-acfa3",
+            storageBucket: "voic-acfa3.firebasestorage.app",
+            messagingSenderId: "7797643208",
+            appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd",
+            measurementId: "G-1VQXZKZ6T9"
         };
 
-        function addChatMessage(message, type = 'system') {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('chat-message', type);
-            messageDiv.textContent = message;
-            chatMessagesElement.appendChild(messageDiv);
-            chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight;
-        }
-        function getSpecificTaunt(situation) {
-            let aiWinningMove = findWinningMove(boardState, player2Symbol);
-            if (aiWinningMove !== -1) return getRandomTaunt('aiAboutToWin');
-            if (situation === 'aiBlockedWin') return getRandomTaunt('aiBlocksWin');
-            if (situation === 'hintUsed') return getRandomTaunt('hintUsed');
-            if (situation === 'playerMoved') {
-                if (Math.random() < 0.3 && currentDifficulty !== 'hard') return getRandomTaunt('playerBadMove');
-                if (Math.random() < 0.5) return getRandomTaunt('playerGoodMove');
-            }
-            return getRandomTaunt('playerMoveGeneral');
-        }
-        function getRandomTaunt(category) {
-            const taunts = aiTaunts[category];
-            return taunts[Math.floor(Math.random() * taunts.length)];
-        }
-        function getStartTaunt() {
-            if (currentGameMode === 'pvai') {
-                if (currentDifficulty === 'easy') return getRandomTaunt('startEasy');
-                if (currentDifficulty === 'medium') return getRandomTaunt('startMedium');
-                return getRandomTaunt('startHard');
-            }
-            return `بازی دو نفره شروع شد! بازیکن ۱ (${player1Symbol}) شروع می‌کنه.`;
-        }
-
-        // --- Board & Game Logic ---
-        function createBoard() {
-            boardElement.innerHTML = '';
-            winningLineCanvas.style.display = 'none';
-            
-            // Critical: Ensure boardElement itself has rendered and has dimensions
-            requestAnimationFrame(() => { // Use requestAnimationFrame to ensure layout is calculated
-                const boardRect = boardElement.getBoundingClientRect();
-                if (boardRect.width === 0 || boardRect.height === 0) {
-                    // If board still has no dimensions, try again or log error
-                    // This can happen if called too early or if display is none
-                    console.warn("Board dimensions are zero. Canvas might not size correctly yet.");
-                    // Fallback to fixed size if needed, though ideally boardRect should be correct
-                    winningLineCanvas.width = parseInt(boardElement.style.width) || 300;
-                    winningLineCanvas.height = parseInt(boardElement.style.height) || 300;
-                } else {
-                    winningLineCanvas.width = boardRect.width;
-                    winningLineCanvas.height = boardRect.height;
-                }
-                // Position canvas exactly over the board
-                // Get offsetLeft/Top from the board's direct PARENT that is positioned
-                const boardContainer = boardElement.parentElement; // Should be .board-container
-                winningLineCanvas.style.left = `${boardElement.offsetLeft}px`;
-                winningLineCanvas.style.top = `${boardElement.offsetTop}px`;
-            });
-
-
-            for (let i = 0; i < 9; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                cell.dataset.index = i;
-                cell.addEventListener('click', handleCellClick);
-                boardElement.appendChild(cell);
-            }
-        }
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
         
-        function drawWinningLine(combination, winner) {
-            if (!combination) return;
-            
-            requestAnimationFrame(() => { // Ensure dimensions are up-to-date
-                const boardRect = boardElement.getBoundingClientRect();
-                if (boardRect.width === 0) return; // Don't draw if board isn't visible/sized
-
-                winningLineCanvas.width = boardRect.width;
-                winningLineCanvas.height = boardRect.height;
-                winningLineCanvas.style.left = `${boardElement.offsetLeft}px`; 
-                winningLineCanvas.style.top = `${boardElement.offsetTop}px`;
-                winningLineCanvas.style.display = 'block';
-                ctx.clearRect(0, 0, winningLineCanvas.width, winningLineCanvas.height);
-
-                const startCell = boardElement.children[combination[0]];
-                const endCell = boardElement.children[combination[2]];
-
-                // Check if cells exist
-                if (!startCell || !endCell) {
-                    console.error("Winning line cells not found.");
-                    return;
-                }
-
-                const startX = startCell.offsetLeft + startCell.offsetWidth / 2;
-                const startY = startCell.offsetTop + startCell.offsetHeight / 2;
-                const endX = endCell.offsetLeft + endCell.offsetWidth / 2;
-                const endY = endCell.offsetTop + endCell.offsetHeight / 2;
-
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(endX, endY);
-                ctx.strokeStyle = winner === player1Symbol ? '#29b6f6' : '#ffee58';
-                ctx.lineWidth = Math.max(6, boardRect.width * 0.025);
-                ctx.lineCap = 'round';
-                ctx.shadowColor = winner === player1Symbol ? 'rgba(41,182,246,0.7)' : 'rgba(255,238,88,0.7)';
-                ctx.shadowBlur = 12;
-                ctx.stroke();
-            });
-        }
-
-        function handleCellClick(event) {
-            if (!gameActive) return;
-            const clickedCell = event.target.closest('.cell'); // Ensure we get the cell itself
-            if (!clickedCell) return;
-
-            const clickedCellIndex = parseInt(clickedCell.dataset.index);
-
-            if (boardState[clickedCellIndex] !== '') return;
-            if (currentGameMode === 'pvai' && currentPlayer === player2Symbol) return;
-            
-            clearHint();
-            playSoundEffect('move');
-            makeMove(clickedCellIndex, currentPlayer); // currentPlayer is correct here
-
-            if (gameActive) {
-                if (currentGameMode === 'pvai') {
-                    addChatMessage(getSpecificTaunt('playerMoved'), 'ai');
-                    currentPlayer = player2Symbol; // Switch to AI
-                    updateStatus();
-                    setTimeout(aiMove, 800 + Math.random() * 500);
-                } else { // PvP
-                    currentPlayer = (currentPlayer === player1Symbol) ? player2Symbol : player1Symbol;
-                    updateStatus();
-                }
-            }
-        }
-
-        function makeMove(index, player) { // player is the one making the move
-            if (boardState[index] === '' && gameActive) {
-                boardState[index] = player;
-                const cellElement = boardElement.children[index];
-                cellElement.textContent = player;
-                cellElement.classList.add(player.toLowerCase(), 'occupied');
-                // Animation for placing piece
-                cellElement.style.transform = 'scale(0.6) rotateY(-20deg)';
-                setTimeout(() => cellElement.style.transform = 'scale(1) rotateY(0deg)', 250);
-
-                const winInfo = checkWin(player); // Check if 'player' (who just moved) won
-                if (winInfo.isWin) {
-                    endGame(false, player, winInfo.combination); // 'player' is the winner
-                } else if (boardState.every(cell => cell !== '')) {
-                    endGame(true); // Draw
-                }
-                // DO NOT switch currentPlayer here, it's handled in handleCellClick after makeMove
-            }
-        }
-
-
-        function checkWin(player, currentBoard = boardState) {
-            for (const combination of winningCombinations) { // winningCombinations is now globally defined
-                if (combination.every(index => currentBoard[index] === player)) {
-                    return { isWin: true, combination: combination };
-                }
-            }
-            return { isWin: false, combination: null };
-        }
+        // ---------------------------------------------------------------------
+        // 2. متغیرهای سراسری و تنظیمات WEBRTC
+        // ---------------------------------------------------------------------
         
-        function highlightWinningCells(combination, winner) {
-            if (combination) {
-                combination.forEach(index => {
-                    boardElement.children[index]?.classList.add('win-animation');
-                });
-                drawWinningLine(combination, winner);
-            }
-        }
+        // ارجاع به المان‌های HTML
+        const joinBtn = document.getElementById('joinBtn');
+        const hangupBtn = document.getElementById('hangupBtn');
+        const statusDiv = document.getElementById('status');
+        const remoteAudiosContainer = document.getElementById('remote-audios');
+        const userCountContainer = document.getElementById('user-count-container');
 
-        function endGame(draw, winner = null, winningCombination = null) {
-            gameActive = false;
-            clearHint();
-            hintButton.disabled = true;
-            let title = '';
-            let message = '';
-            let soundToPlay = '';
+        // تنظیمات سرورهای STUN برای پیدا کردن مسیر بین کاربران
+        const servers = {
+            iceServers: [
+                { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
+            ],
+            iceCandidatePoolSize: 10,
+        };
 
-            if (draw) {
-                scores.draws++;
-                statusTextElement.textContent = 'بازی مساوی شد!';
-                statusTextElement.className = 'status-text draw visible';
-                addChatMessage(currentGameMode === 'pvai' ? getRandomTaunt('draw') : "بازی مساوی شد!", 'system');
-                title = 'مساوی!';
-                message = 'در این گستره فضایی، هیچکدام پیروز نشدند. دوباره تلاش کنیم؟';
-                soundToPlay = 'draw';
-            } else if (winner) {
-                highlightWinningCells(winningCombination, winner);
-                let winnerNameDisplay; // For display in messages
-                if (winner === player1Symbol) {
-                    scores.player1++;
-                    winnerNameDisplay = currentGameMode === 'pvai' ? 'شما' : 'بازیکن ۱';
-                    soundToPlay = 'win';
-                } else { // winner === player2Symbol (AI or Player 2)
-                    scores.player2++;
-                    winnerNameDisplay = currentGameMode === 'pvai' ? 'هوش مصنوعی' : 'بازیکن ۲';
-                    soundToPlay = 'lose'; // Player 1 loses
-                }
-                statusTextElement.textContent = `${winnerNameDisplay} (${winner}) برنده شدید!`;
-                statusTextElement.className = `status-text win-${winner.toLowerCase()} visible`;
+        // متغیرهای وضعیت برنامه
+        let localStream;
+        let localId; // شناسه منحصر به فرد این کاربر در جلسه فعلی
+        const peerConnections = {}; // آبجکتی برای نگهداری تمام ارتباطات همتا به همتا
+        let userDocRef; // ارجاع به داکیومنت کاربر فعلی در Firestore برای حذف در زمان خروج
+        let firestoreUnsubscribes = []; // آرایه‌ای برای نگهداری توابع لغو اشتراک Firestore
+
+        // ---------------------------------------------------------------------
+        // 3. منطق اصلی برنامه (توابع)
+        // ---------------------------------------------------------------------
+
+        /**
+         * تابع اصلی برای شروع فرآیند: ورود به اتاق
+         */
+        const joinRoom = async () => {
+            // به‌روزرسانی UI
+            joinBtn.disabled = true;
+            hangupBtn.disabled = false;
+            statusDiv.textContent = 'در حال درخواست دسترسی به میکروفون...';
+
+            try {
+                // دریافت استریم صوتی از میکروفون کاربر
+                localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                statusDiv.textContent = 'به اتاق متصل شدید! منتظر کاربران دیگر...';
                 
-                if (currentGameMode === 'pvai') {
-                    addChatMessage(winner === player1Symbol ? getRandomTaunt('playerWin') : getRandomTaunt('aiWin'), winner === player1Symbol ? 'player-info' : 'ai');
-                } else {
-                     addChatMessage(`${winnerNameDisplay} (${winner}) برنده شد!`, 'system');
-                }
-                title = `${winnerNameDisplay} فاتح این نبرد شد!`;
-                message = winner === player1Symbol ? 'عالی بود! کهکشان از آن شماست.' : (currentGameMode === 'pvai' ? 'هوش مصنوعی این بار پیروز شد.' : 'بازیکن ۲ این دور را برد.');
-            }
-            
-            playSoundEffect(soundToPlay);
-            updateScoreboard();
-            
-            setTimeout(() => {
-                modalTitleElement.textContent = title;
-                modalMessageElement.textContent = message;
-                gameOverModal.style.display = 'flex';
-            }, winningCombination ? 900 : 200);
-        }
-        
-        modalRestartButton.addEventListener('click', () => { playSoundEffect('click'); gameOverModal.style.display = 'none'; resetGame(); });
-        window.onclick = (event) => { if (event.target == gameOverModal) { playSoundEffect('click'); gameOverModal.style.display = "none"; resetGame(); }};
+                // ایجاد یک شناسه منحصر به فرد برای این کاربر
+                localId = Math.random().toString(36).substring(2, 15);
 
-        function findWinningMove(board, symbol) { // Renamed parameters for clarity
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === '') {
-                    board[i] = symbol; // Test move
-                    if (checkWin(symbol, board).isWin) {
-                        board[i] = ''; return i; // Found winning move
-                    }
-                    board[i] = ''; // Undo test move
-                }
-            }
-            return -1; // No immediate winning move
-        }
-        
-        // AI Core Logic - AI is always player2Symbol
-        function aiMove() {
-            if (!gameActive || currentGameMode !== 'pvai' || currentPlayer !== player2Symbol) {
-                // console.log("AI move skipped. Game Active:", gameActive, "Mode:", currentGameMode, "Current Player:", currentPlayer, "AI Symbol:", player2Symbol);
-                return;
-            }
+                // اضافه کردن کاربر به کالکشن `users` در Firestore
+                userDocRef = await addDoc(collection(db, 'users'), { id: localId, joinedAt: Date.now() });
 
-            addChatMessage(getRandomTaunt('thinking'), 'ai');
-            let move = -1; // Initialize move to an invalid index
-            currentDifficulty = difficultySelect.value;
+                // گوش دادن به تغییرات در کالکشن کاربران
+                setupUserListener();
+                
+                // گوش دادن به سیگنال‌های دریافتی از دیگران
+                setupSignalListener();
 
-            // 1. AI checks if it can win
-            let aiWinningMove = findWinningMove([...boardState], player2Symbol); // Use a copy of boardState for testing
-            if (aiWinningMove !== -1) {
-                move = aiWinningMove;
-                // console.log("AI Found Winning Move:", move);
-            } else {
-                // 2. AI checks if player (player1Symbol) can win, and blocks
-                let playerBlockingMove = findWinningMove([...boardState], player1Symbol);
-                if (playerBlockingMove !== -1) {
-                    move = playerBlockingMove;
-                    // console.log("AI Found Blocking Move:", move);
-                    setTimeout(() => addChatMessage(getSpecificTaunt('aiBlockedWin'), 'ai'), 100);
-                } else {
-                    // 3. Difficulty-based move
-                    // console.log("AI: No immediate win or block. Difficulty:", currentDifficulty);
-                    if (currentDifficulty === 'easy') {
-                        move = getRandomEmptyCell();
-                    } else if (currentDifficulty === 'medium') {
-                        move = getMediumAiMoveInternal(); // This function should return a valid move or -1/undefined
-                    } else { // hard
-                        move = getBestMoveMinimax(player2Symbol, player1Symbol);
-                    }
-                    // console.log("AI selected move by difficulty:", move);
-                }
+            } catch (error) {
+                console.error("خطا در دسترسی به میکروفون: ", error);
+                statusDiv.textContent = 'امکان دسترسی به میکروفون وجود ندارد. لطفا مجوز لازم را بدهید.';
+                hangup(); // بازگرداندن به حالت اولیه
             }
-            
-            if (move !== -1 && move !== undefined && boardState[move] === '') { // Ensure move is valid and cell is empty
-                 setTimeout(() => {
-                    playSoundEffect('move');
-                    makeMove(move, player2Symbol); // AI makes its move
-                    if (gameActive) { // Check if game still active after AI's move
-                        currentPlayer = player1Symbol; // Switch back to player
-                        updateStatus();
+        };
+
+        /**
+         * گوش دادن به ورود و خروج کاربران دیگر
+         */
+        function setupUserListener() {
+            const usersCollection = collection(db, 'users');
+            const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+                // نمایش تعداد کاربران آنلاین
+                const userCount = snapshot.size;
+                userCountContainer.innerHTML = `<span class="user-count">${userCount} کاربر آنلاین</span>`;
+
+                snapshot.docChanges().forEach(async (change) => {
+                    const remoteId = change.doc.data().id;
+
+                    if (change.type === 'added' && remoteId !== localId) {
+                        console.log(`کاربر جدید (${remoteId}) وارد شد. ایجاد ارتباط...`);
+                        // برای هر کاربر جدیدی که وارد می‌شود، یک ارتباط جدید ایجاد می‌کنیم (ما به عنوان آغازگر)
+                        createPeerConnection(remoteId, true);
                     }
-                }, 700 + Math.random() * 700);
-            } else if (gameActive) { // No valid move found, but game is active
-                // This might happen if all cells are full and it's a draw, or an error in AI logic
-                // console.warn("AI could not find a valid move. Current board:", boardState, "Calculated move:", move);
-                if (boardState.every(cell => cell !== '')) { // If board is full, declare draw
-                    endGame(true);
-                } else {
-                    // Fallback: if AI logic somehow failed to produce a move but board is not full, try random
-                    let randomFallback = getRandomEmptyCell();
-                    if (randomFallback !== undefined) {
-                        // console.log("AI using random fallback move:", randomFallback);
-                        setTimeout(() => {
-                            playSoundEffect('move');
-                            makeMove(randomFallback, player2Symbol);
-                            if (gameActive) {
-                                currentPlayer = player1Symbol;
-                                updateStatus();
+
+                    if (change.type === 'removed') {
+                        const removedId = change.doc.data().id;
+                        console.log(`کاربر (${removedId}) خارج شد. قطع ارتباط...`);
+                        // اگر کاربری خارج شد، ارتباط با او را قطع و منابع را پاک می‌کنیم
+                        if (peerConnections[removedId]) {
+                            peerConnections[removedId].close();
+                            delete peerConnections[removedId];
+                            const audioEl = document.getElementById(`audio-${removedId}`);
+                            if (audioEl) {
+                                audioEl.remove();
                             }
-                        }, 700);
-                    } else {
-                        // console.error("AI critical failure: No move possible on non-full board.");
-                        // This state should ideally not be reached.
-                    }
-                }
-            }
-        }
-
-
-        function getRandomEmptyCell() {
-            const emptyCells = [];
-            boardState.forEach((cell, index) => {
-                if (cell === '') emptyCells.push(index);
-            });
-            if (emptyCells.length > 0) {
-                return emptyCells[Math.floor(Math.random() * emptyCells.length)];
-            }
-            return undefined; // No empty cells
-        }
-
-        function getMediumAiMoveInternal() {
-            // Win/Block logic is now primarily handled in aiMove's main flow.
-            // This function provides the "next best" strategic moves for medium.
-            if (boardState[4] === '') return 4; // Center
-            const corners = [0, 2, 6, 8].filter(idx => boardState[idx] === '');
-            if (corners.length > 0) return corners[Math.floor(Math.random() * corners.length)];
-            const sides = [1, 3, 5, 7].filter(idx => boardState[idx] === '');
-            if (sides.length > 0) return sides[Math.floor(Math.random() * sides.length)];
-            return getRandomEmptyCell(); // Fallback
-        }
-
-        function getBestMoveMinimax(aiSymbol, humanSymbol) { // Corrected parameters
-            let bestScore = -Infinity;
-            let move = -1; // Default to -1 if no move found (shouldn't happen on non-full board)
-            
-            const emptyCellsIndices = [];
-            boardState.forEach((cell, index) => {
-                if (cell === '') emptyCellsIndices.push(index);
-            });
-
-            if (emptyCellsIndices.length === 0) return -1; // Should be caught by draw condition earlier
-
-            for (const i of emptyCellsIndices) {
-                // No need to check boardState[i] === '' again, already filtered
-                boardState[i] = aiSymbol; // AI's move
-                let score = minimax([...boardState], 0, false, aiSymbol, humanSymbol); // Pass a copy of boardState
-                boardState[i] = ''; // Undo move
-                if (score > bestScore) {
-                    bestScore = score;
-                    move = i;
-                }
-            }
-            // If move is still -1 (e.g., all moves lead to same score, or only one move left), pick a random valid one
-            if (move === -1 && emptyCellsIndices.length > 0) {
-                // If multiple moves have the same best score, this will pick the first one found.
-                // To make it less predictable, could collect all moves with bestScore and pick randomly.
-                // For now, picking the first one is fine.
-                return emptyCellsIndices[0]; // Or a random one from emptyCellsIndices if no move improves score
-            }
-            return move;
-        }
-
-
-        function minimax(currentBoard, depth, isMaximizingPlayerTurn, aiSymbol, humanSymbol) {
-            // Terminal states
-            if (checkWin(aiSymbol, currentBoard).isWin) return 10 - depth;
-            if (checkWin(humanSymbol, currentBoard).isWin) return depth - 10;
-            if (currentBoard.every(cell => cell !== '')) return 0; // Draw
-
-            const emptyCellsIndices = [];
-            currentBoard.forEach((cell, index) => {
-                if (cell === '') emptyCellsIndices.push(index);
-            });
-
-            if (isMaximizingPlayerTurn) { // AI's turn (Maximizer)
-                let maxEval = -Infinity;
-                for (const i of emptyCellsIndices) {
-                    currentBoard[i] = aiSymbol;
-                    let evalScore = minimax([...currentBoard], depth + 1, false, aiSymbol, humanSymbol);
-                    currentBoard[i] = ''; // Backtrack
-                    maxEval = Math.max(maxEval, evalScore);
-                }
-                return maxEval;
-            } else { // Human's turn (Minimizer)
-                let minEval = Infinity;
-                for (const i of emptyCellsIndices) {
-                    currentBoard[i] = humanSymbol;
-                    let evalScore = minimax([...currentBoard], depth + 1, true, aiSymbol, humanSymbol);
-                    currentBoard[i] = ''; // Backtrack
-                    minEval = Math.min(minEval, evalScore);
-                }
-                return minEval;
-            }
-        }
-        
-        // --- UI Updates & Resets ---
-        function updateScoreboard() {
-            player1ScoreElement.textContent = scores.player1;
-            player2ScoreElement.textContent = scores.player2;
-            drawScoreElement.textContent = scores.draws;
-            const p1Name = currentGameMode === 'pvai' ? 'شما' : 'بازیکن ۱';
-            player1NameScoreElement.textContent = `${p1Name} (${player1Symbol})`;
-            const p2Name = currentGameMode === 'pvai' ? 'هوش مصنوعی' : 'بازیکن ۲';
-            player2NameScoreElement.textContent = `${p2Name} (${player2Symbol})`;
-        }
-
-        function updateStatus() {
-            let statusMsg = '';
-            statusTextElement.classList.remove('visible');
-
-            setTimeout(() => {
-                if (currentGameMode === 'pvai') {
-                    statusMsg = currentPlayer === player1Symbol ? `نوبت شما (${player1Symbol})` : `نوبت هوش مصنوعی (${player2Symbol})`;
-                    difficultySelect.disabled = false;
-                    hintButton.style.display = 'block';
-                    chatAreaElement.style.display = 'block';
-                } else { // pvp
-                    statusMsg = currentPlayer === player1Symbol ? `نوبت بازیکن ۱ (${player1Symbol})` : `نوبت بازیکن ۲ (${player2Symbol})`;
-                    difficultySelect.disabled = true;
-                    hintButton.style.display = 'none';
-                    chatAreaElement.style.display = 'none';
-                }
-                statusTextElement.textContent = statusMsg;
-                statusTextElement.className = 'status-text visible';
-            }, 150);
-        }
-        
-        function resetGame() {
-            playSoundEffect('click');
-            boardState.fill('');
-            gameActive = true;
-            player1Symbol = player1SymbolSelect.value;
-            player2Symbol = player1Symbol === 'X' ? 'O' : 'X';
-            currentPlayer = player1Symbol; // Player 1 (human) always starts
-            hintButton.disabled = false;
-            clearHint();
-
-            createBoard(); // This will also correctly size and position the canvas
-            updateStatus();
-            updateScoreboard();
-            
-            chatMessagesElement.innerHTML = '';
-            if (currentGameMode === 'pvai') {
-                addChatMessage(getStartTaunt(), 'ai');
-            } else {
-                addChatMessage(getStartTaunt(), 'system');
-            }
-            gameOverModal.style.display = 'none';
-        }
-        
-        // --- Hint Logic ---
-        function showHint() {
-            if (!gameActive || currentGameMode !== 'pvai' || currentPlayer !== player1Symbol) return;
-            if (currentDifficulty === 'hard') {
-                addChatMessage("در سطح سخت راهنمایی نداریم، به هوش خودت تکیه کن!", 'system');
-                playSoundEffect('click');
-                return;
-            }
-
-            playSoundEffect('hint');
-            addChatMessage(getSpecificTaunt('hintUsed'), 'ai');
-            clearHint();
-
-            let hintMove = -1;
-            // 1. Can player win?
-            hintMove = findWinningMove([...boardState], player1Symbol);
-            // 2. Can AI win (block it)?
-            if (hintMove === -1) hintMove = findWinningMove([...boardState], player2Symbol);
-            // 3. Take center?
-            if (hintMove === -1 && boardState[4] === '') hintMove = 4;
-            // 4. Take a random strategic spot (corner then side)
-            if (hintMove === -1) {
-                const strategicSpots = [0,2,6,8,1,3,5,7].filter(idx => boardState[idx] === '');
-                if (strategicSpots.length > 0) hintMove = strategicSpots[Math.floor(Math.random() * strategicSpots.length)]; // Random from strategic
-            }
-            // 5. Random empty if all else fails
-            if (hintMove === -1 || hintMove === undefined) hintMove = getRandomEmptyCell();
-
-
-            if (hintMove !== -1 && hintMove !== undefined && boardState[hintMove] === '') {
-                hintCellIndex = hintMove;
-                boardElement.children[hintCellIndex]?.classList.add('hint-cell');
-                setTimeout(clearHint, 2500);
-            } else {
-                // console.log("Hint could not find a valid cell. Move:", hintMove);
-            }
-        }
-
-        function clearHint() {
-            if (hintCellIndex !== -1 && boardElement.children[hintCellIndex]) {
-                boardElement.children[hintCellIndex].classList.remove('hint-cell');
-                hintCellIndex = -1;
-            }
-        }
-        
-        // Event Listeners
-        resetButton.addEventListener('click', resetGame);
-        difficultySelect.addEventListener('change', (event) => { playSoundEffect('click'); currentDifficulty = event.target.value; addChatMessage(`سطح سختی به ${event.target.options[event.target.selectedIndex].text} تغییر کرد.`, 'system'); });
-        gameModeSelect.addEventListener('change', (event) => { playSoundEffect('click'); currentGameMode = event.target.value; scores = { player1: 0, player2: 0, draws: 0 }; resetGame(); });
-        player1SymbolSelect.addEventListener('change', () => { playSoundEffect('click'); resetGame(); });
-        
-        soundToggleButton.addEventListener('click', () => {
-            soundEffectsEnabled = !soundEffectsEnabled;
-            soundToggleButton.textContent = `🔊 افکت: ${soundEffectsEnabled ? 'روشن' : 'خاموش'}`;
-            soundToggleButton.classList.toggle('muted', !soundEffectsEnabled);
-            playSoundEffect('click');
-        });
-        musicToggleButton.addEventListener('click', toggleMusic);
-        hintButton.addEventListener('click', showHint);
-
-        // Initial setup
-        resetGame();
-        updateScoreboard();
-        
-        window.addEventListener('resize', () => {
-            // Re-create board on resize to adjust canvas and cell sizes correctly
-            // This will reset the visual state of the board.
-            createBoard();
-            // If a game was won and line was drawn, it needs to be redrawn based on new coordinates
-            if (!gameActive) {
-                let winnerSymbol = null;
-                let winCombination = null;
-
-                const p1WinInfo = checkWin(player1Symbol);
-                if (p1WinInfo.isWin) {
-                    winnerSymbol = player1Symbol;
-                    winCombination = p1WinInfo.combination;
-                } else {
-                    const p2WinInfo = checkWin(player2Symbol);
-                    if (p2WinInfo.isWin) {
-                        winnerSymbol = player2Symbol;
-                        winCombination = p2WinInfo.combination;
-                    }
-                }
-                
-                if (winnerSymbol && winCombination) {
-                    // Redraw cells with symbols before drawing line
-                    boardState.forEach((symbol, index) => {
-                        if (symbol && boardElement.children[index]) {
-                            boardElement.children[index].textContent = symbol;
-                            boardElement.children[index].classList.add(symbol.toLowerCase(), 'occupied');
                         }
-                    });
-                    // Highlight winning cells again if needed
-                     winCombination.forEach(index => {
-                        boardElement.children[index]?.classList.add('win-animation');
-                    });
-                    drawWinningLine(winCombination, winnerSymbol);
+                    }
+                });
+            });
+            firestoreUnsubscribes.push(unsubscribe);
+        }
+
+        /**
+         * گوش دادن به سیگنال‌های WebRTC (offer, answer, ice-candidate)
+         */
+        function setupSignalListener() {
+            const signalsCollection = collection(db, 'signals');
+            // فقط سیگنال‌هایی را دریافت می‌کنیم که برای ما ارسال شده‌اند
+            const q = query(signalsCollection, where("to", "==", localId));
+            
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                snapshot.docChanges().forEach(async (change) => {
+                    if (change.type === 'added') {
+                        const signal = change.doc.data();
+                        
+                        // پس از خواندن سیگنال، آن را حذف می‌کنیم تا دیتابیس شلوغ نشود
+                        await deleteDoc(doc(db, 'signals', change.doc.id));
+
+                        const remoteId = signal.from;
+
+                        // اگر هنوز ارتباطی با این کاربر نداریم، ایجادش می‌کنیم
+                        if (!peerConnections[remoteId]) {
+                            createPeerConnection(remoteId, false); // این بار ما آغازگر نیستیم
+                        }
+
+                        const pc = peerConnections[remoteId];
+
+                        if (signal.sdp) { // اگر از نوع offer یا answer باشد
+                            try {
+                                await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+                                if (pc.remoteDescription.type === 'offer') {
+                                    const answer = await pc.createAnswer();
+                                    await pc.setLocalDescription(answer);
+                                    sendSignal(remoteId, { sdp: pc.localDescription });
+                                }
+                            } catch (e) { console.error("Error setting remote description", e); }
+
+                        } else if (signal.candidate) { // اگر از نوع ice-candidate باشد
+                             try {
+                                await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+                            } catch (e) { console.error('Error adding received ice candidate', e); }
+                        }
+                    }
+                });
+            });
+            firestoreUnsubscribes.push(unsubscribe);
+        }
+
+        /**
+         * ایجاد یک ارتباط همتا به همتا (PeerConnection)
+         * @param {string} remoteId - شناسه کاربر دیگر
+         * @param {boolean} isInitiator - آیا ما آغازگر این ارتباط هستیم؟
+         */
+        function createPeerConnection(remoteId, isInitiator) {
+            console.log(`ایجاد PeerConnection برای ${remoteId}...`);
+            const pc = new RTCPeerConnection(servers);
+            peerConnections[remoteId] = pc;
+
+            // استریم صوتی خودمان را به این ارتباط اضافه می‌کنیم تا برای طرف مقابل ارسال شود
+            localStream.getTracks().forEach(track => {
+                pc.addTrack(track, localStream);
+            });
+
+            // وقتی استریم صوتی از طرف مقابل دریافت شد
+            pc.ontrack = event => {
+                let audioEl = document.getElementById(`audio-${remoteId}`);
+                if (!audioEl) {
+                    audioEl = document.createElement('audio');
+                    audioEl.id = `audio-${remoteId}`;
+                    audioEl.autoplay = true;
+                    remoteAudiosContainer.appendChild(audioEl);
                 }
+                audioEl.srcObject = event.streams[0];
+            };
+
+            // وقتی یک ICE candidate توسط مرورگر ما تولید می‌شود
+            pc.onicecandidate = event => {
+                if (event.candidate) {
+                    sendSignal(remoteId, { candidate: event.candidate.toJSON() });
+                }
+            };
+            
+            // اگر ما آغازگر ارتباط هستیم، یک offer می‌سازیم و ارسال می‌کنیم
+            if (isInitiator) {
+                pc.createOffer()
+                    .then(offer => pc.setLocalDescription(offer))
+                    .then(() => {
+                        sendSignal(remoteId, { sdp: pc.localDescription });
+                    })
+                    .catch(e => console.error("Error creating offer", e));
+            }
+        }
+
+        /**
+         * ارسال سیگنال به کاربر دیگر از طریق Firestore
+         * @param {string} toId - شناسه گیرنده
+         * @param {object} data - داده سیگنال (sdp یا candidate)
+         */
+        async function sendSignal(toId, data) {
+            const signalData = { to: toId, from: localId, ...data };
+            await addDoc(collection(db, 'signals'), signalData);
+        }
+
+        /**
+         * تابع خروج از اتاق و پاک‌سازی منابع
+         */
+        const hangup = async () => {
+            // قطع تمام ارتباطات همتا به همتا
+            Object.values(peerConnections).forEach(pc => pc.close());
+            
+            // توقف ترک‌های میکروفون
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+
+            // پاک کردن المان‌های صوتی از صفحه
+            remoteAudiosContainer.innerHTML = '';
+
+            // لغو اشتراک از شنوندگان Firestore برای جلوگیری از نشت حافظه
+            firestoreUnsubscribes.forEach(unsubscribe => unsubscribe());
+            firestoreUnsubscribes = [];
+
+            // حذف کاربر از کالکشن `users` در Firestore
+            if (userDocRef) {
+                await deleteDoc(userDocRef);
+            }
+            // پاکسازی سیگنال های باقی مانده
+            const q = query(collection(db, 'signals'), where("from", "==", localId));
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => deleteDoc(doc.ref));
+
+            // بازگرداندن UI به حالت اولیه
+            joinBtn.disabled = false;
+            hangupBtn.disabled = true;
+            statusDiv.textContent = 'شما از اتاق خارج شدید.';
+            userCountContainer.innerHTML = '';
+        };
+
+        // ---------------------------------------------------------------------
+        // 4. اتصال رویدادها به توابع
+        // ---------------------------------------------------------------------
+        joinBtn.onclick = joinRoom;
+        hangupBtn.onclick = hangup;
+
+        // اگر کاربر صفحه را ببندد یا رفرش کند، به طور خودکار خارج شود
+        window.addEventListener('beforeunload', (e) => {
+            if (localStream) { // فقط اگر در تماس باشد
+                 hangup();
             }
         });
-         // Initial call to size canvas correctly after elements are rendered
-        // Use a small timeout to ensure DOM is fully ready for getBoundingClientRect
-        setTimeout(createBoard, 100);
-
 
     </script>
 </body>
