@@ -3,200 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>چت روم صوتی عمومی (نسخه نهایی)</title>
+    <title>لابی صوتی عمومی (کیفیت استودیویی)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
-        .container { background-color: #fff; padding: 30px 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); max-width: 500px; width: 90%; }
-        h1 { color: #1a73e8; margin-top: 0; }
-        p { line-height: 1.6; }
-        .buttons { margin: 20px 0; }
-        button { background-color: #1a73e8; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; margin: 0 10px; transition: background-color 0.3s, transform 0.2s; }
-        button:hover:not(:disabled) { background-color: #1558b8; transform: translateY(-2px); }
-        button:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
-        #hangupBtn { background-color: #d93025; }
-        #hangupBtn:hover:not(:disabled) { background-color: #b5281e; }
-        #status { margin-top: 20px; font-weight: bold; color: #555; min-height: 24px; transition: color 0.3s; }
-        #remote-audios video, #remote-audios audio { display: none; }
-        .lobby { margin-top: 25px; text-align: right; }
-        .lobby h3 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-        #user-list { list-style-type: none; padding: 0; }
-        #user-list li { background-color: #e8f0fe; color: #1a73e8; padding: 8px 12px; border-radius: 20px; margin-bottom: 8px; display: inline-block; font-weight: 500; }
+        body { font-family: 'Vazirmatn', sans-serif; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader {
+            border: 4px solid rgba(0, 0, 0, .1);
+            border-left-color: #4f46e5;
+            animation: spin 1s linear infinite;
+        }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5); display: flex;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 2rem; border-radius: 0.75rem;
+            text-align: center; max-width: 90%; width: 400px;
+        }
+        .user-bubble {
+            display: inline-flex;
+            align-items: center;
+            background-color: #eef2ff;
+            color: #4338ca;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin: 0.25rem;
+            transition: box-shadow 0.2s ease-in-out;
+        }
+        /* --- PRO UPGRADE: Speaking Indicator Styles --- */
+        .speaking-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #9ca3af; /* Gray when silent */
+            margin-left: 10px; /* For RTL layout */
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 1);
+        }
+        .is-speaking .speaking-indicator {
+            background-color: #22c55e; /* Green when speaking */
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>چت روم صوتی عمومی</h1>
-        <p>با کلیک روی "ورود به چت"، به اتاق عمومی متصل شوید. لیست کاربران حاضر در زیر نمایش داده می‌شود.</p>
-        <div class="buttons">
-            <button id="joinBtn">ورود به چت</button>
-            <button id="hangupBtn" disabled>خروج</button>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+
+    <div class="container mx-auto p-4 max-w-2xl w-full">
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+
+            <div id="room-view">
+                <h1 class="text-2xl md:text-3xl font-bold text-center text-indigo-600 mb-2">لابی عمومی (کیفیت استودیویی)</h1>
+                 <p id="status" class="text-gray-500 text-center mb-6 h-6">در حال اتصال...</p>
+
+                <div class="mb-4">
+                    <h2 class="font-bold text-lg mb-2 text-center">کاربران حاضر</h2>
+                    <div id="users-container" class="min-h-[50px] bg-gray-50 rounded-lg p-2 flex flex-wrap justify-center items-center">
+                        <span id="no-users-text" class="text-gray-400">هنوز کسی اینجا نیست...</span>
+                    </div>
+                </div>
+
+                <div id="audio-container" class="mt-4 space-y-2">
+                    <video id="localAudio" muted autoplay playsinline class="hidden"></video>
+                </div>
+                
+                <div id="loading-spinner" class="loader w-8 h-8 rounded-full mx-auto my-4"></div>
+
+                <div class="mt-8 flex justify-center gap-4">
+                    <button id="hangupBtn" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-transform transform hover:scale-105 hidden">
+                        خروج از لابی
+                    </button>
+                </div>
+            </div>
         </div>
-        <div id="status">در انتظار اتصال...</div>
-        <div class="lobby">
-            <h3>کاربران حاضر در لابی</h3>
-            <ul id="user-list"></ul>
+        <div class="text-center mt-4 text-xs text-gray-400">
+            ساخته شده با WebRTC و Firebase
         </div>
-        <div id="remote-audios"></div>
+    </div>
+    
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <p id="modal-text" class="mb-4"></p>
+            <button id="modal-close" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">باشه</button>
+        </div>
     </div>
 
     <script type="module">
-        // 1. راه‌اندازی FIREBASE
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, doc, addDoc, onSnapshot, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, deleteDoc, writeBatch, getDocs, setDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Your web app's Firebase configuration (UPDATED)
         const firebaseConfig = {
-            apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
-            authDomain: "voic-acfa3.firebaseapp.com",
-            projectId: "voic-acfa3",
-            storageBucket: "voic-acfa3.firebasestorage.app",
-            messagingSenderId: "7797643208",
-            appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd"
+          apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
+          authDomain: "voic-acfa3.firebaseapp.com",
+          projectId: "voic-acfa3",
+          storageBucket: "voic-acfa3.firebasestorage.app",
+          messagingSenderId: "7797643208",
+          appId: "1:7797643208:web:ca69e49eb448a96cf8d2fd",
+          measurementId: "G-1VQXZKZ6T9"
         };
+        
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = firebaseConfig.projectId;
         
-        // 2. متغیرهای سراسری
-        const joinBtn = document.getElementById('joinBtn');
+        const servers = { iceServers: [ { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] } ] };
+        const publicRoomId = "multi-user-lobby-pro-hq";
+        let localStream, myId;
+        let peerConnections = {};
+        let membersUnsubscribe, signalsUnsubscribe;
+
         const hangupBtn = document.getElementById('hangupBtn');
-        const statusDiv = document.getElementById('status');
-        const remoteAudiosContainer = document.getElementById('remote-audios');
-        const userList = document.getElementById('user-list');
-        
-        const servers = { 
-            iceServers: [
-                { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
-                {
-                    urls: "turn:openrelay.metered.ca:443?transport=tcp",
-                    username: "openrelayproject",
-                    credential: "openrelayproject"
-                }
-            ]
-        };
-        
-        let localStream, localId, userDocRef;
-        const peerConnections = {}; 
-        let firestoreUnsubscribes = [];
+        const localAudio = document.getElementById('localAudio');
+        const statusText = document.getElementById('status');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const usersContainer = document.getElementById('users-container');
+        const noUsersText = document.getElementById('no-users-text');
+        const modal = document.getElementById('modal');
+        const modalText = document.getElementById('modal-text');
+        const modalClose = document.getElementById('modal-close');
 
-        // 3. منطق اصلی برنامه
-        const joinRoom = async () => {
-            joinBtn.disabled = true; hangupBtn.disabled = false;
-            statusDiv.textContent = 'در حال درخواست دسترسی به میکروفون...';
+        function showModal(message) { modalText.innerText = message; modal.classList.remove('hidden'); }
+        modalClose.onclick = () => modal.classList.add('hidden');
+        
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                myId = user.uid;
+                joinPublicLobby();
+            } else {
+                signInAnonymously(auth).catch(err => showModal(`Authentication Error: ${err.message}`));
+            }
+        });
+
+        async function joinPublicLobby() {
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                localId = Math.random().toString(36).substring(2, 12);
-                userDocRef = await addDoc(collection(db, 'users'), { id: localId, name: `کاربر ${localId}` });
-                setupListeners();
-                statusDiv.textContent = 'شما در اتاق هستید. منتظر دیگران...';
-            } catch (error) {
-                console.error("❌ خطا: ", error);
-                statusDiv.textContent = 'خطایی رخ داد.';
-                hangup();
-            }
-        };
+                const audioConstraints = {
+                    audio: {
+                        echoCancellation: true, noiseSuppression: true, autoGainControl: true,
+                        channelCount: 2, sampleRate: 48000,
+                    },
+                    video: false,
+                };
+                localStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+                localAudio.srcObject = localStream;
 
-        function setupListeners() {
-            const usersUnsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
-                userList.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const user = doc.data();
-                    const li = document.createElement('li');
-                    li.textContent = user.name + (user.id === localId ? ' (شما)' : '');
-                    userList.appendChild(li);
+                statusText.innerText = 'در حال پیوستن به لابی...';
+                
+                const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+                const membersCol = collection(roomRef, "members");
+                await setDoc(doc(membersCol, myId), { joinedAt: Date.now() });
+
+                membersUnsubscribe = onSnapshot(membersCol, (snapshot) => {
+                    snapshot.docChanges().forEach(async (change) => {
+                        const remoteId = change.doc.id;
+                        if (remoteId === myId) return;
+
+                        if (change.type === "added") {
+                            statusText.innerText = `کاربر ${remoteId.substring(0,6)} وارد شد.`;
+                            peerConnections[remoteId] = createPeerConnection(remoteId);
+                            if (myId < remoteId) await sendOffer(remoteId);
+                        } else if (change.type === "removed") {
+                           statusText.innerText = `کاربر ${remoteId.substring(0,6)} خارج شد.`;
+                           closeConnection(remoteId);
+                        }
+                        updateUsersUI();
+                    });
+                     updateUsersUI();
                 });
+                
+                const signalsCol = collection(roomRef, "signals");
+                const q = query(signalsCol, where("to", "==", myId));
+                signalsUnsubscribe = onSnapshot(q, (snapshot) => {
+                    (async () => {
+                        for (const document of snapshot.docs) {
+                            const signalData = document.data();
+                            const remoteId = signalData.from;
+                            const pc = peerConnections[remoteId];
 
-                snapshot.docChanges().forEach(change => {
-                    const user = change.doc.data();
-                    if (change.type === 'added' && user.id !== localId) {
-                        const isInitiator = localId > user.id;
-                        createPeerConnection(user.id, isInitiator);
-                    }
-                    if (change.type === 'removed' && peerConnections[user.id]) {
-                        peerConnections[user.id].pc.close();
-                        delete peerConnections[user.id];
-                    }
-                });
-            });
+                            if (!pc) { await deleteDoc(document.ref); continue; }
 
-            const signalsQuery = query(collection(db, 'signals'), where("to", "==", localId));
-            const signalsUnsubscribe = onSnapshot(signalsQuery, async (snapshot) => {
-                for (const change of snapshot.docChanges()) {
-                    if (change.type === 'added') {
-                        const signal = change.doc.data();
-                        if (!peerConnections[signal.from]) createPeerConnection(signal.from, false);
-                        const { pc, iceCandidateQueue } = peerConnections[signal.from];
-                        try {
-                            if (signal.sdp) {
-                                await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-                                while (iceCandidateQueue.length > 0) {
-                                    await pc.addIceCandidate(iceCandidateQueue.shift());
-                                }
-                                if (pc.remoteDescription.type === 'offer') {
+                            try {
+                                if (signalData.offer && pc.signalingState === 'stable') {
+                                    await pc.setRemoteDescription(new RTCSessionDescription(signalData.offer));
                                     const answer = await pc.createAnswer();
-                                    await pc.setLocalDescription(answer);
-                                    sendSignal(signal.from, { sdp: pc.localDescription.toJSON() });
+                                    const hqAnswer = setAudioQuality(answer);
+                                    await pc.setLocalDescription(hqAnswer);
+                                    await sendSignal(remoteId, { answer: hqAnswer });
+                                } else if (signalData.answer && pc.signalingState === 'have-local-offer') {
+                                    await pc.setRemoteDescription(new RTCSessionDescription(signalData.answer));
+                                } else if (signalData.iceCandidate && pc.remoteDescription) {
+                                    await pc.addIceCandidate(new RTCIceCandidate(signalData.iceCandidate));
                                 }
-                            } else if (signal.candidate) {
-                                if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
-                                else iceCandidateQueue.push(new RTCIceCandidate(signal.candidate));
-                            }
-                        } catch (e) { console.error("خطا در پردازش سیگنال: ", e); }
-                        await deleteDoc(change.doc.ref);
-                    }
-                }
-            });
-            firestoreUnsubscribes.push(usersUnsubscribe, signalsUnsubscribe);
-        }
-
-        function createPeerConnection(remoteId, isInitiator) {
-            console.log(`🤝 ایجاد PeerConnection برای ${remoteId}. آیا ما آغازگر هستیم؟ ${isInitiator}`);
-            const pc = new RTCPeerConnection(servers);
-            peerConnections[remoteId] = { pc: pc, iceCandidateQueue: [] };
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            pc.ontrack = event => {
-                const audioEl = document.createElement('audio');
-                audioEl.srcObject = event.streams[0];
-                audioEl.autoplay = true;
-                remoteAudiosContainer.appendChild(audioEl);
-            };
-            pc.onicecandidate = e => {
-                if(e.candidate) {
-                    console.log(`[ICE Candidate] نوع: ${e.candidate.type}`);
-                    sendSignal(remoteId, { candidate: e.candidate.toJSON() });
-                }
-            };
-            pc.onconnectionstatechange = () => {
-                 console.log(`[State] وضعیت اتصال با ${remoteId}: ${pc.connectionState}`);
-                if (pc.connectionState === 'connected') {
-                    statusDiv.textContent = 'اتصال برقرار شد! در حال مکالمه...';
-                    statusDiv.style.color = 'green';
-                }
-            };
-            if (isInitiator) {
-                pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
-                    sendSignal(remoteId, { sdp: pc.localDescription.toJSON() });
+                            } catch (err) { console.error("Signal Processing Error:", err); }
+                            await deleteDoc(document.ref);
+                        }
+                    })();
                 });
+                
+                loadingSpinner.classList.add('hidden');
+                hangupBtn.classList.remove('hidden');
+
+            } catch (err) {
+                showModal(`خطای ورود به لابی: ${err.message}`);
+                statusText.innerText = "خطا در اتصال";
+                loadingSpinner.classList.add('hidden');
             }
         }
+        
+        function setAudioQuality(sdpObject) {
+            let sdp = sdpObject.sdp;
+            // --- PRO UPGRADE: More advanced Opus parameters ---
+            const opusParams = 'useinbandfec=1;stereo=1;sprop-stereo=1;usedtx=0;maxaveragebitrate=128000;maxplaybackrate=48000';
+            const opusRegex = /a=rtpmap:(\d+) opus\/48000\/2/i;
+            const match = sdp.match(opusRegex);
+            if (match) {
+                const payloadType = match[1];
+                const fmtpRegex = new RegExp(`a=fmtp:${payloadType} .*`, 'i');
+                const newFmtpLine = `a=fmtp:${payloadType} ${opusParams}`;
+                if (sdp.match(fmtpRegex)) {
+                    sdp = sdp.replace(fmtpRegex, newFmtpLine);
+                } else {
+                    sdp = sdp.replace(match[0], `${match[0]}\r\n${newFmtpLine}`);
+                }
+            }
+            return { type: sdpObject.type, sdp };
+        }
+        
+        // --- PRO UPGRADE: Audio visualizer for speaking indicators ---
+        function setupAudioVisualizer(stream, remoteId) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
 
-        async function sendSignal(toId, data) {
-            await addDoc(collection(db, 'signals'), { to: toId, from: localId, ...data });
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            peerConnections[remoteId].visualizer = { audioContext, animationFrameId: null };
+
+            const draw = () => {
+                const userBubble = document.getElementById(`user-${remoteId}`);
+                if (!userBubble) {
+                    cancelAnimationFrame(peerConnections[remoteId].visualizer.animationFrameId);
+                    return;
+                }
+
+                analyser.getByteFrequencyData(dataArray);
+                let sum = dataArray.reduce((a, b) => a + b, 0);
+                let average = sum / bufferLength;
+                
+                if (average > 20) { // Threshold for speaking
+                    userBubble.classList.add('is-speaking');
+                } else {
+                    userBubble.classList.remove('is-speaking');
+                }
+                
+                peerConnections[remoteId].visualizer.animationFrameId = requestAnimationFrame(draw);
+            };
+            draw();
         }
 
-        const hangup = async () => {
-            firestoreUnsubscribes.forEach(unsub => unsub());
-            firestoreUnsubscribes = [];
-            Object.values(peerConnections).forEach(conn => conn.pc.close());
-            if (localStream) localStream.getTracks().forEach(track => track.stop());
-            remoteAudiosContainer.innerHTML = ''; userList.innerHTML = '';
-            if (userDocRef) await deleteDoc(userDocRef);
-            localStream = null; userDocRef = null;
-            joinBtn.disabled = false; hangupBtn.disabled = true;
-            statusDiv.textContent = 'شما از اتاق خارج شدید.';
-            statusDiv.style.color = '#555';
-        };
+        function createPeerConnection(remoteId) {
+            const pc = new RTCPeerConnection(servers);
+            
+            pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { iceCandidate: e.candidate.toJSON() });
 
-        joinBtn.onclick = joinRoom; hangupBtn.onclick = hangup;
-        window.addEventListener('beforeunload', () => localStream && hangup());
+            pc.ontrack = event => {
+                let remoteAudio = document.getElementById(`audio-${remoteId}`);
+                if (!remoteAudio) {
+                    remoteAudio = document.createElement('audio');
+                    remoteAudio.id = `audio-${remoteId}`;
+                    remoteAudio.autoplay = true;
+                    remoteAudio.playsInline = true;
+                    document.getElementById('audio-container').appendChild(remoteAudio);
+                    remoteAudio.srcObject = event.streams[0];
+                    setupAudioVisualizer(event.streams[0], remoteId); // Setup visualizer on track
+                }
+            };
+
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            return pc;
+        }
+
+        async function sendOffer(remoteId) {
+            const pc = peerConnections[remoteId];
+            if (!pc) return;
+            try {
+                const offer = await pc.createOffer();
+                const hqOffer = setAudioQuality(offer);
+                await pc.setLocalDescription(hqOffer);
+                await sendSignal(remoteId, { offer: hqOffer });
+            } catch (err) { console.error("Offer Error:", err); }
+        }
+        
+        async function sendSignal(toId, data) {
+            const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+            const signalsCol = collection(roomRef, "signals");
+            await addDoc(signalsCol, { ...data, from: myId, to: toId });
+        }
+        
+        function closeConnection(remoteId) {
+            const pcData = peerConnections[remoteId];
+            if (pcData) {
+                if (pcData.visualizer) {
+                    cancelAnimationFrame(pcData.visualizer.animationFrameId);
+                    pcData.visualizer.audioContext.close();
+                }
+                pcData.close();
+                delete peerConnections[remoteId];
+            }
+            document.getElementById(`audio-${remoteId}`)?.remove();
+        }
+
+        function updateUsersUI() {
+            const memberIds = new Set(Object.keys(peerConnections));
+            if (myId) memberIds.add(myId);
+            
+            usersContainer.innerHTML = '';
+            
+            if (memberIds.size <= 1) {
+                 usersContainer.appendChild(noUsersText);
+            } else if (usersContainer.contains(noUsersText)) {
+                 noUsersText.remove();
+            }
+
+            memberIds.forEach(id => {
+                 const userBubble = document.createElement('div');
+                 userBubble.className = 'user-bubble';
+                 userBubble.id = `user-${id}`;
+                 
+                 const indicator = document.createElement('div');
+                 indicator.className = 'speaking-indicator';
+
+                 const nameSpan = document.createElement('span');
+                 nameSpan.textContent = `کاربر ${id.substring(0, 6)}...` + (id === myId ? ' (شما)' : '');
+                 
+                 userBubble.appendChild(nameSpan);
+                 userBubble.appendChild(indicator);
+                 usersContainer.appendChild(userBubble);
+            });
+        }
+        
+        async function hangup() {
+            if (myId) {
+                const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
+                await deleteDoc(doc(collection(roomRef, "members"), myId)).catch(console.error);
+            }
+
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            Object.keys(peerConnections).forEach(id => closeConnection(id));
+            peerConnections = {};
+
+            if (membersUnsubscribe) membersUnsubscribe();
+            if (signalsUnsubscribe) signalsUnsubscribe();
+
+            window.location.reload();
+        }
+
+        hangupBtn.onclick = hangup;
+        window.addEventListener('beforeunload', hangup);
+
     </script>
 </body>
 </html>
