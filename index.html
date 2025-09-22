@@ -68,6 +68,7 @@
             font-weight: bold;
             color: #555;
             transition: color 0.5s ease;
+            word-break: break-word;
         }
         
         .status-success {
@@ -99,11 +100,11 @@
         </div>
     </div>
 
-    <!-- Appwrite Web SDK - **نسخه به‌روز شده** -->
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/browser/appwrite.min.js"></script>
+    <!-- Appwrite Web SDK - **لینک اصلاح شده** -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/sdk.min.js"></script>
 
     <script>
-        // JavaScript Logic
+        // JavaScript Logic (بدون تغییر)
         document.addEventListener('DOMContentLoaded', () => {
             const APPWRITE_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
             const APPWRITE_PROJECT_ID = '68d024f50002176ce603';
@@ -113,8 +114,6 @@
             const statusMessage = document.getElementById('status-message');
 
             try {
-                // **این بخش مهمترین تغییر است**
-                // مطمئن می‌شویم که Appwrite قبل از استفاده، تعریف شده باشد
                 const { Client, Account } = Appwrite; 
                 const client = new Client();
 
@@ -132,7 +131,7 @@
                         if (error.code && error.code >= 400) {
                             setSuccessState(`اتصال موفقیت‌آمیز بود. سرور Appwrite به درستی پاسخ داد. (پیام سرور: ${error.message})`);
                         } else {
-                            setFailureState(`اتصال با خطا مواجه شد. لطفاً تنظیمات شبکه و CORS در پنل Appwrite را بررسی کنید. (پیام خطا: ${error.message})`);
+                            setFailureState(`اتصال با خطا مواجه شد. لطفاً تنظیمات شبکه را بررسی کنید. (پیام خطا: ${error.message})`);
                         }
                     }
                 }
@@ -152,7 +151,6 @@
                 setTimeout(testConnection, 1000);
             
             } catch (e) {
-                // اگر حتی با این تغییرات Appwrite تعریف نشده بود، این خطا نمایش داده می‌شود
                 setFailureState('خطای حیاتی: کتابخانه Appwrite SDK بارگذاری نشده است. لطفاً اتصال اینترنت و آدرس CDN را بررسی کنید.');
             }
         });
