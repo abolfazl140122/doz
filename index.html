@@ -5,89 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تست اتصال به سرور Appwrite</title>
     
-    <!-- Import Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* CSS Styles (بدون تغییر) */
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: #333;
-        }
-
-        .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 90%;
-            max-width: 500px;
-            border-top: 5px solid #6c757d;
-            transition: border-color 0.5s ease;
-        }
-
-        h1 {
-            color: #1d2d50;
-            margin-bottom: 30px;
-        }
-
-        .status-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100px;
-        }
-
-        .loader {
-            border: 6px solid #e0e0e0;
-            border-top: 6px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1.5s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        #status-message {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #555;
-            transition: color 0.5s ease;
-            word-break: break-word;
-        }
-        
-        .status-success {
-            border-top-color: #28a745;
-        }
-        .status-success #status-message {
-            color: #28a745;
-        }
-
-        .status-error {
-            border-top-color: #dc3545;
-        }
-        .status-error #status-message {
-            color: #dc3545;
-        }
-        
-        .hidden {
-            display: none;
-        }
+        body { font-family: 'Vazirmatn', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #333; }
+        .container { background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); text-align: center; width: 90%; max-width: 500px; border-top: 5px solid #6c757d; transition: border-color 0.5s ease; }
+        h1 { color: #1d2d50; margin-bottom: 30px; }
+        .status-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100px; }
+        .loader { border: 6px solid #e0e0e0; border-top: 6px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1.5s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #status-message { font-size: 1.1rem; font-weight: bold; color: #555; transition: color 0.5s ease; word-break: break-word; }
+        .status-success { border-top-color: #28a745; }
+        .status-success #status-message { color: #28a745; }
+        .status-error { border-top-color: #dc3545; }
+        .status-error #status-message { color: #dc3545; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -100,11 +34,10 @@
         </div>
     </div>
 
-    <!-- Appwrite Web SDK - **لینک اصلاح شده** -->
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/sdk.min.js"></script>
+    <!-- Appwrite Web SDK - **لینک نهایی و کاملاً صحیح** -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/umd/appwrite.min.js"></script>
 
     <script>
-        // JavaScript Logic (بدون تغییر)
         document.addEventListener('DOMContentLoaded', () => {
             const APPWRITE_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
             const APPWRITE_PROJECT_ID = '68d024f50002176ce603';
