@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ایجاد کاربر جدید در Appwrite</title>
     <style>
-        /* --- استایل‌های کلی و فونت --- */
+        /* CSS styles remain the same as before, no changes needed here */
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
         :root {
@@ -29,7 +29,6 @@
             color: var(--dark-text);
         }
 
-        /* --- استایل کارت اصلی --- */
         .container {
             width: 100%;
             max-width: 500px;
@@ -50,11 +49,10 @@
             color: var(--dark-text);
         }
 
-        /* --- استایل فرم --- */
         .signup-form {
             display: flex;
             flex-direction: column;
-            gap: 20px; /* فاصله بین فیلدها */
+            gap: 20px;
             text-align: right;
         }
         
@@ -85,7 +83,6 @@
             box-shadow: 0 0 0 3px rgba(240, 46, 101, 0.2);
         }
 
-        /* --- استایل دکمه --- */
         .btn {
             background-color: var(--primary-color);
             color: white;
@@ -110,7 +107,6 @@
             cursor: not-allowed;
         }
 
-        /* --- استایل بخش وضعیت --- */
         #status-container {
             margin-top: 30px;
             padding: 15px;
@@ -126,7 +122,7 @@
         #status-container.visible {
             opacity: 1;
             transform: translateY(0);
-            max-height: 500px; /* ارتفاع کافی برای نمایش محتوا */
+            max-height: 500px;
         }
 
         .status-success { background-color: #d1fae5; color: #065f46; border: 1px solid var(--success-color); }
@@ -178,16 +174,19 @@
         </div>
     </div>
 
-    <!-- ایمپورت کردن کتابخانه Appwrite Web SDK (با آدرس صحیح و جدید) -->
+    <!-- 
+        ===========================================================
+        ==>   تغییر اصلی و مهم در این خط است   <==
+        ===========================================================
+     -->
     <script type="module">
-        // ایمپورت کردن کلاس‌های مورد نیاز از Appwrite SDK
-        import { Client, Account, ID, AppwriteException } from 'https://cdn.jsdelivr.net/npm/appwrite@14.0.1/dist/browser/appwrite.min.js';
+        // آدرس CDN به آخرین نسخه پایدار و صحیح تغییر کرد
+        import { Client, Account, ID, AppwriteException } from "https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/https-sdk.js";
 
-        // --- تعریف ثابت‌ها و اطلاعات پروژه شما ---
+        // --- بقیه کد جاوا اسکریپت بدون تغییر باقی می‌ماند ---
         const PROJECT_ID = '68d024f50002176ce603';
         const API_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
 
-        // --- دسترسی به عناصر HTML ---
         const signupForm = document.getElementById('signup-form');
         const submitButton = document.getElementById('submit-btn');
         const nameInput = document.getElementById('name');
@@ -198,7 +197,6 @@
         const statusMessage = document.getElementById('status-message');
         const detailsContainer = document.getElementById('details');
         
-        // --- مقداردهی اولیه Appwrite Client ---
         const client = new Client();
         client
             .setEndpoint(API_ENDPOINT)
@@ -206,36 +204,29 @@
 
         const account = new Account(client);
 
-        // --- تابع اصلی برای ایجاد کاربر ---
         async function createUser(event) {
-            event.preventDefault(); // جلوگیری از رفرش شدن صفحه
+            event.preventDefault(); 
 
-            // 1. آماده‌سازی UI برای ارسال درخواست
             submitButton.disabled = true;
             submitButton.textContent = 'در حال ارسال...';
             updateUI('loading', 'در حال ایجاد حساب کاربری...', '');
 
             try {
-                // 2. خواندن مقادیر از فرم
                 const name = nameInput.value;
                 const email = emailInput.value;
                 const password = passwordInput.value;
 
-                // 3. ارسال درخواست ایجاد کاربر به سرور Appwrite
-                // از ID.unique() برای ساخت یک شناسه یکتا برای کاربر استفاده می‌کنیم
                 const newUser = await account.create(ID.unique(), email, password, name);
 
-                // 4. نمایش پیام موفقیت
                 console.log('User created successfully:', newUser);
                 updateUI(
                     'success',
                     '✅ حساب کاربری با موفقیت ایجاد شد!',
                     `کاربر جدید با اطلاعات زیر در سرور ذخیره شد:\n\nID: ${newUser.$id}\nEmail: ${newUser.email}\nName: ${newUser.name}`
                 );
-                signupForm.reset(); // خالی کردن فرم
+                signupForm.reset();
 
             } catch (error) {
-                // 5. مدیریت و نمایش خطا
                 console.error('Failed to create user:', error);
                 let errorMessage = 'یک خطای ناشناخته رخ داد.';
                 let errorDetails = error.message;
@@ -243,7 +234,6 @@
                 if (error instanceof AppwriteException) {
                     errorMessage = '❌ خطا در ایجاد حساب کاربری!';
                     errorDetails = `Code: ${error.code}\nMessage: ${error.message}\nType: ${error.type}`;
-                    // خطای رایج: ایمیل تکراری
                     if (error.code === 409) {
                         errorMessage = '❌ این ایمیل قبلاً ثبت شده است!';
                     }
@@ -251,20 +241,17 @@
                 
                 updateUI('error', errorMessage, errorDetails);
             } finally {
-                // 6. بازگرداندن UI به حالت اولیه
                 submitButton.disabled = false;
                 submitButton.textContent = 'ایجاد حساب کاربری';
             }
         }
         
-        // --- تابع کمکی برای آپدیت کردن UI ---
         function updateUI(type, message, details) {
             statusContainer.className = `status-${type} visible`;
             statusMessage.textContent = message;
             detailsContainer.textContent = details;
         }
 
-        // --- افزودن رویداد submit به فرم ---
         signupForm.addEventListener('submit', createUser);
 
     </script>
