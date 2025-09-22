@@ -1,113 +1,97 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تست اتصال به Appwrite</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ثبت‌نام کاربر در Appwrite</title>
 
-  <!-- فونت و متغیرهای رنگ -->
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap");
-
     :root{
-      --primary:#f02e65;--success:#10b981;--error:#ef4444;
-      --neutral:#6b7280;--light:#f9fafb;--dark:#1f2937;
-      --shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05)
+      --pink:#f02e65;--success:#10b981;--error:#ef4444;--gray:#6b7280;--light:#f9fafb
     }
     *{box-sizing:border-box}body{
-      margin:0;font-family:"Vazirmatn",sans-serif;display:flex;
-      justify-content:center;align-items:center;min-height:100vh;
-      background:linear-gradient(135deg,#ece9e6,#fff);color:var(--dark)}
-    .container{width:100%;max-width:600px;padding:20px}
-    .card{background:#fff;border-radius:16px;padding:40px;box-shadow:var(--shadow);
-      text-align:center;transition:.3s}.card:hover{transform:translateY(-5px)}
-    h1{margin:0 0 10px;font-size:2rem}
-    p{color:var(--neutral);line-height:1.6}
-    .info{background:var(--light);border-radius:8px;padding:15px;margin:20px 0;
-      border:1px solid #e5e7eb;text-align:right}
-    .info code{word-break:break-all}
-    .btn{background:var(--primary);color:#fff;border:none;padding:15px 30px;
-      font-size:1rem;font-weight:700;border-radius:50px;cursor:pointer;
-      transition:.3s;margin-top:20px}
-    .btn:hover{background:#d62255;transform:scale(1.05)}
-    .btn:disabled{background:#f9a7bf;cursor:not-allowed}
-    #status{margin-top:30px;padding:15px;border-radius:8px;font-weight:700;
-      opacity:0;transform:translateY(10px);transition:.5s}
-    #status.visible{opacity:1;transform:translateY(0)}
-    .ok{background:#d1fae5;color:#065f46;border:1px solid var(--success)}
-    .err{background:#fee2e2;color:#991b1b;border:1px solid var(--error)}
-    .wait{background:#e0e7ff;color:#3730a3;border:1px solid #6366f1}
-    #details{margin-top:15px;font-family:monospace;direction:ltr;
-      background:var(--light);padding:10px;border-radius:5px;font-size:.8rem;
-      white-space:pre-wrap;word-break:break-all;color:var(--neutral)}
+      margin:0;display:flex;justify-content:center;align-items:center;
+      min-height:100vh;background:#f2f5f7;font-family:"Vazirmatn",sans-serif
+    }
+    .box{background:#fff;padding:40px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.1);width:100%;max-width:380px}
+    h1{margin:0 0 20px;font-size:1.4rem;text-align:center}
+    input{width:100%;padding:12px 14px;margin:8px 0;border:1px solid #d1d5db;border-radius:8px;font-family:inherit}
+    button{width:100%;padding:12px;margin-top:12px;border:none;border-radius:8px;background:var(--pink);color:#fff;font-weight:700;cursor:pointer}
+    button:hover{background:#d62255}
+    #msg{margin-top:18px;font-weight:700;border-radius:8px;padding:12px;display:none}
+    .ok{background:#d1fae5;color:#065f46}
+    .err{background:#fee2e2;color:#991b1b}
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>تست اتصال به Appwrite</h1>
-      <p>برای اطمینان از صحت تنظیمات پروژه و پلتفرم.</p>
 
-      <div class="info">
-        <p><strong>Project&nbsp;ID:</strong> <code id="pid"></code></p>
-        <p><strong>Endpoint:</strong> <code id="endpoint"></code></p>
-      </div>
+  <div class="box">
+    <h1>فرم ثبت‌نام</h1>
 
-      <button class="btn" id="run">شروع تست اتصال</button>
+    <input id="name"  type="text"     placeholder="نام (اختیاری)" />
+    <input id="email" type="email"    placeholder="ایمیل" />
+    <input id="pass"  type="password" placeholder="رمز عبور" />
 
-      <div id="status">
-        <p id="msg"></p>
-        <pre id="details"></pre>
-      </div>
-    </div>
+    <button id="signup">ثبت نام</button>
+
+    <div id="msg"></div>
   </div>
 
-  <!-- Web SDK -->
   <script type="module">
-    import { Client, Account, AppwriteException } from
+    import { Client, Account, ID, AppwriteException } from
       "https://cdn.jsdelivr.net/npm/appwrite@13/dist/browser/appwrite.min.js";
 
-    /* -------- مشخصات پروژه -------- */
+    /* ------ تنظیمات پروژه ------ */
     const PROJECT  = "68d024f50002176ce603";
-    const ENDPOINT = "https://fra.cloud.appwrite.io"; // /v1 لازم نیست
+    const ENDPOINT = "https://fra.cloud.appwrite.io";
 
-    document.getElementById("pid").textContent      = PROJECT;
-    document.getElementById("endpoint").textContent = ENDPOINT;
-
-    /* -------- کلاینت -------- */
-    const client = new Client().setEndpoint(ENDPOINT).setProject(PROJECT);
+    const client  = new Client().setEndpoint(ENDPOINT).setProject(PROJECT);
     const account = new Account(client);
 
-    /* -------- عناصر UI -------- */
-    const btn      = document.getElementById("run");
-    const box      = document.getElementById("status");
-    const msg      = document.getElementById("msg");
-    const details  = document.getElementById("details");
+    /* ------ عناصر صفحه ------ */
+    const $ = (id)=>document.getElementById(id);
+    const msgBox = $("msg");
 
-    function show(type, m, d="") {
-      box.className = (type==="ok" ? "ok" : type==="err" ? "err" : "wait") + " visible";
-      msg.textContent = m;
-      details.textContent = d;
+    function show(type,text){
+      msgBox.className = type==="ok" ? "ok" : "err";
+      msgBox.textContent = text;
+      msgBox.style.display = "block";
     }
 
-    async function test() {
-      btn.disabled = true; btn.textContent = "در حال تست...";
-      show("wait","در حال برقراری ارتباط...");
-      try {
-        await account.get(); // اگر Session داشته باشیم 200 می‌دهد
-        show("ok","✅ اتصال برقرار است (Session فعال).");
-      } catch(e){
-        if(e instanceof AppwriteException && e.code === 401){
-          show("ok","✅ اتصال برقرار است!","سرور 401 برگرداند که یعنی فقط لاگین نیستیم.");
-        }else{
-          show("err","❌ خطا از سمت سرور",`${e.code ?? ""} ${e.message}`);
-        }
-      } finally {
-        btn.disabled = false; btn.textContent = "تست مجدد اتصال";
+    $("signup").addEventListener("click", async ()=>{
+      const email = $("email").value.trim();
+      const pass  = $("pass").value;
+      const name  = $("name").value.trim();
+
+      if(!email || !pass){
+        show("err","ایمیل و رمز عبور الزامی است!");
+        return;
       }
-    }
 
-    btn.addEventListener("click", test);
+      $("signup").disabled = true;
+      show("","در حال ثبت…");
+
+      try{
+        /* -------- ساخت کاربر -------- */
+        await account.create(ID.unique(), email, pass, name || undefined);
+
+        /* -------- ورود (session) -------- */
+        await account.createEmailSession(email, pass);
+
+        show("ok","✅ کاربر ایجاد و لاگین شد! اکنون در کنسول Appwrite → Auth می‌بینید.");
+      }
+      catch(e){
+        if(e instanceof AppwriteException){
+          show("err",`❌ ${e.message} (کد ${e.code})`);
+        }else{
+          show("err","❌ خطای ارتباطی: "+e.message);
+        }
+      }
+      finally{
+        $("signup").disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
