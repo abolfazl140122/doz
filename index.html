@@ -1,270 +1,113 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تست اتصال به سرور Appwrite</title>
-    <style>
-        /* --- استایل‌های کلی و فونت --- */
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تست اتصال به Appwrite</title>
 
-        :root {
-            --primary-color: #f02e65; /* رنگ اصلی اپ‌رایت */
-            --success-color: #10b981;
-            --error-color: #ef4444;
-            --neutral-color: #6b7280;
-            --light-bg: #f9fafb;
-            --dark-text: #1f2937;
-            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
+  <!-- فونت و متغیرهای رنگ -->
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap");
 
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #ece9e6, #ffffff);
-            color: var(--dark-text);
-        }
-
-        /* --- استایل کارت اصلی --- */
-        .container {
-            width: 100%;
-            max-width: 600px;
-            padding: 20px;
-        }
-
-        .card {
-            background-color: white;
-            border-radius: 16px;
-            padding: 40px;
-            box-shadow: var(--card-shadow);
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            color: var(--dark-text);
-        }
-
-        p {
-            color: var(--neutral-color);
-            line-height: 1.6;
-        }
-        
-        .info-box {
-            background-color: var(--light-bg);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-            text-align: right;
-            border: 1px solid #e5e7eb;
-        }
-
-        .info-box p {
-            margin: 5px 0;
-            font-size: 0.9rem;
-            word-wrap: break-word; /* برای شکستن شناسه‌های طولانی */
-        }
-
-        .info-box strong {
-            color: var(--primary-color);
-        }
-
-        /* --- استایل دکمه --- */
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1rem;
-            font-weight: 700;
-            font-family: 'Vazirmatn', sans-serif;
-            border-radius: 50px; /* دکمه کپسولی */
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 20px;
-        }
-
-        .btn:hover {
-            background-color: #d62255;
-            transform: scale(1.05);
-        }
-        
-        .btn:active {
-            transform: scale(0.98);
-        }
-        
-        .btn:disabled {
-            background-color: #f9a7bf;
-            cursor: not-allowed;
-        }
-
-        /* --- استایل بخش وضعیت --- */
-        #status-container {
-            margin-top: 30px;
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: 700;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-        
-        #status-container.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .status-success {
-            background-color: #d1fae5;
-            color: #065f46;
-            border: 1px solid var(--success-color);
-        }
-
-        .status-error {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid var(--error-color);
-        }
-        
-        .status-connecting {
-            background-color: #e0e7ff;
-            color: #3730a3;
-            border: 1px solid #6366f1;
-        }
-
-        #details {
-            margin-top: 15px;
-            font-family: monospace; /* فونت مناسب برای نمایش کد/خطا */
-            text-align: left;
-            direction: ltr;
-            background-color: var(--light-bg);
-            padding: 10px;
-            border-radius: 5px;
-            white-space: pre-wrap; /* برای شکستن خطوط طولانی */
-            word-break: break-all;
-            font-size: 0.8rem;
-            color: var(--neutral-color);
-        }
-    </style>
+    :root{
+      --primary:#f02e65;--success:#10b981;--error:#ef4444;
+      --neutral:#6b7280;--light:#f9fafb;--dark:#1f2937;
+      --shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05)
+    }
+    *{box-sizing:border-box}body{
+      margin:0;font-family:"Vazirmatn",sans-serif;display:flex;
+      justify-content:center;align-items:center;min-height:100vh;
+      background:linear-gradient(135deg,#ece9e6,#fff);color:var(--dark)}
+    .container{width:100%;max-width:600px;padding:20px}
+    .card{background:#fff;border-radius:16px;padding:40px;box-shadow:var(--shadow);
+      text-align:center;transition:.3s}.card:hover{transform:translateY(-5px)}
+    h1{margin:0 0 10px;font-size:2rem}
+    p{color:var(--neutral);line-height:1.6}
+    .info{background:var(--light);border-radius:8px;padding:15px;margin:20px 0;
+      border:1px solid #e5e7eb;text-align:right}
+    .info code{word-break:break-all}
+    .btn{background:var(--primary);color:#fff;border:none;padding:15px 30px;
+      font-size:1rem;font-weight:700;border-radius:50px;cursor:pointer;
+      transition:.3s;margin-top:20px}
+    .btn:hover{background:#d62255;transform:scale(1.05)}
+    .btn:disabled{background:#f9a7bf;cursor:not-allowed}
+    #status{margin-top:30px;padding:15px;border-radius:8px;font-weight:700;
+      opacity:0;transform:translateY(10px);transition:.5s}
+    #status.visible{opacity:1;transform:translateY(0)}
+    .ok{background:#d1fae5;color:#065f46;border:1px solid var(--success)}
+    .err{background:#fee2e2;color:#991b1b;border:1px solid var(--error)}
+    .wait{background:#e0e7ff;color:#3730a3;border:1px solid #6366f1}
+    #details{margin-top:15px;font-family:monospace;direction:ltr;
+      background:var(--light);padding:10px;border-radius:5px;font-size:.8rem;
+      white-space:pre-wrap;word-break:break-all;color:var(--neutral)}
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="card">
+      <h1>تست اتصال به Appwrite</h1>
+      <p>برای اطمینان از صحت تنظیمات پروژه و پلتفرم.</p>
 
-    <div class="container">
-        <div class="card">
-            <h1>تست اتصال به Appwrite</h1>
-            <p>این صفحه برای تست ارتباط با سرور Appwrite شما طراحی شده است. اطلاعات پروژه شما در زیر آمده است.</p>
-            
-            <div class="info-box">
-                <p><strong>شناسه پروژه (Project ID):</strong> <code id="project-id"></code></p>
-                <p><strong>آدرس سرور (API Endpoint):</strong> <code id="api-endpoint"></code></p>
-            </div>
+      <div class="info">
+        <p><strong>Project&nbsp;ID:</strong> <code id="pid"></code></p>
+        <p><strong>Endpoint:</strong> <code id="endpoint"></code></p>
+      </div>
 
-            <button id="test-btn" class="btn">شروع تست اتصال</button>
+      <button class="btn" id="run">شروع تست اتصال</button>
 
-            <div id="status-container">
-                <p id="status-message"></p>
-                <pre id="details"></pre>
-            </div>
-        </div>
+      <div id="status">
+        <p id="msg"></p>
+        <pre id="details"></pre>
+      </div>
     </div>
+  </div>
 
-    <!-- ایمپورت کردن کتابخانه Appwrite Web SDK (نسخه اصلاح شده) -->
-    <script type="module">
-        // آدرس کتابخانه به آخرین نسخه پایدار تغییر کرد
-        import { Client, Account, AppwriteException } from 'https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/browser/appwrite.min.js';
+  <!-- Web SDK -->
+  <script type="module">
+    import { Client, Account, AppwriteException } from
+      "https://cdn.jsdelivr.net/npm/appwrite@13/dist/browser/appwrite.min.js";
 
-        // --- تعریف ثابت‌ها و اطلاعات پروژه شما ---
-        const PROJECT_ID = '68d024f50002176ce603';
-        const API_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
+    /* -------- مشخصات پروژه -------- */
+    const PROJECT  = "68d024f50002176ce603";
+    const ENDPOINT = "https://fra.cloud.appwrite.io"; // /v1 لازم نیست
 
-        // --- دسترسی به عناصر HTML ---
-        const testButton = document.getElementById('test-btn');
-        const statusContainer = document.getElementById('status-container');
-        const statusMessage = document.getElementById('status-message');
-        const detailsContainer = document.getElementById('details');
-        
-        // نمایش اطلاعات پروژه در صفحه
-        document.getElementById('project-id').textContent = PROJECT_ID;
-        document.getElementById('api-endpoint').textContent = API_ENDPOINT;
+    document.getElementById("pid").textContent      = PROJECT;
+    document.getElementById("endpoint").textContent = ENDPOINT;
 
-        // --- مقداردهی اولیه Appwrite Client ---
-        const client = new Client();
-        client
-            .setEndpoint(API_ENDPOINT)
-            .setProject(PROJECT_ID);
+    /* -------- کلاینت -------- */
+    const client = new Client().setEndpoint(ENDPOINT).setProject(PROJECT);
+    const account = new Account(client);
 
-        const account = new Account(client);
+    /* -------- عناصر UI -------- */
+    const btn      = document.getElementById("run");
+    const box      = document.getElementById("status");
+    const msg      = document.getElementById("msg");
+    const details  = document.getElementById("details");
 
-        // --- تابع اصلی برای تست اتصال ---
-        async function testConnection() {
-            // 1. آماده‌سازی UI برای تست
-            testButton.disabled = true;
-            testButton.textContent = 'در حال تست...';
-            statusContainer.className = 'status-connecting visible';
-            statusMessage.textContent = 'در حال برقراری ارتباط با سرور...';
-            detailsContainer.textContent = '';
+    function show(type, m, d="") {
+      box.className = (type==="ok" ? "ok" : type==="err" ? "err" : "wait") + " visible";
+      msg.textContent = m;
+      details.textContent = d;
+    }
 
-            try {
-                // 2. تلاش برای اجرای یک درخواست ساده به سرور
-                await account.get();
-                updateUI('success', 'اتصال موفق بود و یک Session فعال پیدا شد!', 'شما از قبل وارد حساب کاربری خود شده‌اید.');
-
-            } catch (error) {
-                // 3. مدیریت خطاها
-                if (error instanceof AppwriteException) {
-                    if (error.code === 401) {
-                        updateUI(
-                            'success', 
-                            '✅ اتصال به سرور با موفقیت برقرار شد!', 
-                            'سرور Appwrite به درستی پاسخ داد (خطای 401 به معنی نیاز به ورود کاربر است که کاملاً طبیعی است).\n\nپیکربندی شما صحیح است!'
-                        );
-                    } else {
-                        updateUI(
-                            'error',
-                            '❌ اتصال ناموفق بود! سرور Appwrite یک خطا برگرداند.',
-                            `Code: ${error.code}\nMessage: ${error.message}\nType: ${error.type}`
-                        );
-                    }
-                } else {
-                    updateUI(
-                        'error',
-                        '❌ اتصال ناموفق بود! یک خطای اساسی رخ داد.',
-                        `این خطا معمولاً به دلیل مشکلات شبکه یا تنظیمات CORS است.\n\nپیام خطا:\n${error.message}\n\nراه حل:\nمطمئن شوید هاست‌نیم abolfazl140122.github.io را در بخش Platforms کنسول پروژه Appwrite خود اضافه کرده‌اید.`
-                    );
-                }
-            } finally {
-                // 4. بازگرداندن UI به حالت اولیه
-                testButton.disabled = false;
-                testButton.textContent = 'تست مجدد اتصال';
-            }
+    async function test() {
+      btn.disabled = true; btn.textContent = "در حال تست...";
+      show("wait","در حال برقراری ارتباط...");
+      try {
+        await account.get(); // اگر Session داشته باشیم 200 می‌دهد
+        show("ok","✅ اتصال برقرار است (Session فعال).");
+      } catch(e){
+        if(e instanceof AppwriteException && e.code === 401){
+          show("ok","✅ اتصال برقرار است!","سرور 401 برگرداند که یعنی فقط لاگین نیستیم.");
+        }else{
+          show("err","❌ خطا از سمت سرور",`${e.code ?? ""} ${e.message}`);
         }
-        
-        // --- تابع کمکی برای آپدیت کردن UI ---
-        function updateUI(type, message, details) {
-            statusMessage.textContent = message;
-            detailsContainer.textContent = details;
-            
-            if (type === 'success') {
-                statusContainer.className = 'status-success visible';
-            } else if (type === 'error') {
-                statusContainer.className = 'status-error visible';
-            }
-        }
+      } finally {
+        btn.disabled = false; btn.textContent = "تست مجدد اتصال";
+      }
+    }
 
-        // --- افزودن رویداد کلیک به دکمه ---
-        testButton.addEventListener('click', testConnection);
-
-    </script>
+    btn.addEventListener("click", test);
+  </script>
 </body>
 </html>
