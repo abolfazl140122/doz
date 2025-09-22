@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* CSS Styles */
+        /* CSS Styles (بدون تغییر) */
         body {
             font-family: 'Vazirmatn', sans-serif;
             background-color: #f0f2f5;
@@ -31,7 +31,7 @@
             text-align: center;
             width: 90%;
             max-width: 500px;
-            border-top: 5px solid #6c757d; /* Default border color */
+            border-top: 5px solid #6c757d;
             transition: border-color 0.5s ease;
         }
 
@@ -48,10 +48,9 @@
             min-height: 100px;
         }
 
-        /* Loader Animation */
         .loader {
-            border: 6px solid #e0e0e0; /* Light grey */
-            border-top: 6px solid #3498db; /* Blue */
+            border: 6px solid #e0e0e0;
+            border-top: 6px solid #3498db;
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -71,17 +70,15 @@
             transition: color 0.5s ease;
         }
         
-        /* Success State */
         .status-success {
-            border-top-color: #28a745; /* Green */
+            border-top-color: #28a745;
         }
         .status-success #status-message {
             color: #28a745;
         }
 
-        /* Error State */
         .status-error {
-            border-top-color: #dc3545; /* Red */
+            border-top-color: #dc3545;
         }
         .status-error #status-message {
             color: #dc3545;
@@ -102,71 +99,62 @@
         </div>
     </div>
 
-    <!-- Appwrite Web SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1/dist/browser/appwrite.min.js"></script>
+    <!-- Appwrite Web SDK - **نسخه به‌روز شده** -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/browser/appwrite.min.js"></script>
 
     <script>
         // JavaScript Logic
         document.addEventListener('DOMContentLoaded', () => {
-            // اطلاعات سرور شما
             const APPWRITE_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
             const APPWRITE_PROJECT_ID = '68d024f50002176ce603';
 
-            // انتخاب عناصر HTML
             const mainContainer = document.getElementById('main-container');
             const loader = document.getElementById('loader');
             const statusMessage = document.getElementById('status-message');
 
-            // مقداردهی اولیه Appwrite SDK
-            const { Client, Account } = Appwrite;
-            const client = new Client();
+            try {
+                // **این بخش مهمترین تغییر است**
+                // مطمئن می‌شویم که Appwrite قبل از استفاده، تعریف شده باشد
+                const { Client, Account } = Appwrite; 
+                const client = new Client();
 
-            client
-                .setEndpoint(APPWRITE_ENDPOINT)
-                .setProject(APPWRITE_PROJECT_ID);
+                client
+                    .setEndpoint(APPWRITE_ENDPOINT)
+                    .setProject(APPWRITE_PROJECT_ID);
 
-            const account = new Account(client);
+                const account = new Account(client);
 
-            // تابع تست اتصال
-            async function testConnection() {
-                try {
-                    // ما تلاش میکنیم اطلاعات حساب کاربری را بگیریم.
-                    // چون لاگین نیستیم، این دستور باید یک خطا برگرداند.
-                    // اگر خطای 401 (عدم دسترسی) دریافت کنیم، یعنی اتصال موفق بوده است.
-                    await account.get();
-                    
-                    // این بخش به ندرت اجرا می‌شود (مگر اینکه یک سشن فعال از قبل وجود داشته باشد)
-                    setSuccessState("اتصال موفقیت‌آمیز بود. (یک جلسه فعال در مرورگر شما وجود دارد)");
-
-                } catch (error) {
-                    // بررسی می‌کنیم که آیا خطا از سمت سرور Appwrite است یا یک خطای شبکه
-                    if (error.code && error.code >= 400) {
-                        // این حالت موفقیت‌آمیز است! سرور به درخواست ما پاسخ داده است.
-                        // خطای 401 طبیعی است چون ما لاگین نکرده‌ایم.
-                        setSuccessState(`اتصال موفقیت‌آمیز بود. سرور Appwrite به درستی پاسخ داد. (پیام سرور: ${error.message})`);
-                    } else {
-                        // این یک خطای شبکه است (مانند CORS، DNS یا قطع بودن اینترنت)
-                        // نکته: اگر با خطای CORS مواجه شدید، باید دامنه خود را در پنل Appwrite در بخش Platforms اضافه کنید.
-                        // اگر این فایل را به صورت محلی باز میکنید، 'localhost' را اضافه کنید.
-                        setFailureState(`اتصال با خطا مواجه شد. لطفاً تنظیمات شبکه و CORS در پنل Appwrite را بررسی کنید. (پیام خطا: ${error.message})`);
+                async function testConnection() {
+                    try {
+                        await account.get();
+                        setSuccessState("اتصال موفقیت‌آمیز بود. (یک جلسه فعال در مرورگر شما وجود دارد)");
+                    } catch (error) {
+                        if (error.code && error.code >= 400) {
+                            setSuccessState(`اتصال موفقیت‌آمیز بود. سرور Appwrite به درستی پاسخ داد. (پیام سرور: ${error.message})`);
+                        } else {
+                            setFailureState(`اتصال با خطا مواجه شد. لطفاً تنظیمات شبکه و CORS در پنل Appwrite را بررسی کنید. (پیام خطا: ${error.message})`);
+                        }
                     }
                 }
-            }
 
-            function setSuccessState(message) {
-                loader.classList.add('hidden');
-                statusMessage.textContent = message;
-                mainContainer.classList.add('status-success');
-            }
+                function setSuccessState(message) {
+                    loader.classList.add('hidden');
+                    statusMessage.textContent = message;
+                    mainContainer.classList.add('status-success');
+                }
 
-            function setFailureState(message) {
-                loader.classList.add('hidden');
-                statusMessage.textContent = message;
-                mainContainer.classList.add('status-error');
-            }
+                function setFailureState(message) {
+                    loader.classList.add('hidden');
+                    statusMessage.textContent = message;
+                    mainContainer.classList.add('status-error');
+                }
 
-            // اجرای تست پس از 1 ثانیه برای نمایش بهتر انیمیشن لودینگ
-            setTimeout(testConnection, 1000);
+                setTimeout(testConnection, 1000);
+            
+            } catch (e) {
+                // اگر حتی با این تغییرات Appwrite تعریف نشده بود، این خطا نمایش داده می‌شود
+                setFailureState('خطای حیاتی: کتابخانه Appwrite SDK بارگذاری نشده است. لطفاً اتصال اینترنت و آدرس CDN را بررسی کنید.');
+            }
         });
     </script>
 
