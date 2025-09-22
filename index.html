@@ -179,10 +179,10 @@
         </div>
     </div>
 
-    <!-- ایمپورت کردن کتابخانه Appwrite Web SDK -->
+    <!-- ایمپورت کردن کتابخانه Appwrite Web SDK (نسخه اصلاح شده) -->
     <script type="module">
-        // ایمپورت کردن کلاس‌های مورد نیاز از Appwrite SDK
-        import { Client, Account, AppwriteException } from 'https://cdn.jsdelivr.net/npm/appwrite@13.0.0/dist/browser/appwrite.min.js';
+        // آدرس کتابخانه به آخرین نسخه پایدار تغییر کرد
+        import { Client, Account, AppwriteException } from 'https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/browser/appwrite.min.js';
 
         // --- تعریف ثابت‌ها و اطلاعات پروژه شما ---
         const PROJECT_ID = '68d024f50002176ce603';
@@ -217,26 +217,19 @@
 
             try {
                 // 2. تلاش برای اجرای یک درخواست ساده به سرور
-                // ما از `account.get()` استفاده می‌کنیم. انتظار داریم این درخواست با خطای 401 (عدم دسترسی) مواجه شود،
-                // چون کاربر لاگین نکرده است. دریافت این خطا یعنی ارتباط با سرور "موفق" بوده است.
                 await account.get();
-                
-                // این بخش معمولا اجرا نمی‌شود مگر اینکه یک session فعال وجود داشته باشد
                 updateUI('success', 'اتصال موفق بود و یک Session فعال پیدا شد!', 'شما از قبل وارد حساب کاربری خود شده‌اید.');
 
             } catch (error) {
                 // 3. مدیریت خطاها
                 if (error instanceof AppwriteException) {
-                    // اگر خطا از نوع خطاهای شناخته‌شده Appwrite باشد
                     if (error.code === 401) {
-                        // این بهترین نتیجه است! یعنی سرور در دسترس است ولی ما لاگین نیستیم.
                         updateUI(
                             'success', 
                             '✅ اتصال به سرور با موفقیت برقرار شد!', 
                             'سرور Appwrite به درستی پاسخ داد (خطای 401 به معنی نیاز به ورود کاربر است که کاملاً طبیعی است).\n\nپیکربندی شما صحیح است!'
                         );
                     } else {
-                        // خطای دیگری از سمت سرور Appwrite
                         updateUI(
                             'error',
                             '❌ اتصال ناموفق بود! سرور Appwrite یک خطا برگرداند.',
@@ -244,7 +237,6 @@
                         );
                     }
                 } else {
-                    // اگر خطا از نوع شبکه، CORS یا مشکلات دیگر باشد
                     updateUI(
                         'error',
                         '❌ اتصال ناموفق بود! یک خطای اساسی رخ داد.',
