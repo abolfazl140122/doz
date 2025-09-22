@@ -1,97 +1,272 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ثبت‌نام کاربر در Appwrite</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ایجاد کاربر جدید در Appwrite</title>
+    <style>
+        /* --- استایل‌های کلی و فونت --- */
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
 
-  <style>
-    @import url("https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap");
-    :root{
-      --pink:#f02e65;--success:#10b981;--error:#ef4444;--gray:#6b7280;--light:#f9fafb
-    }
-    *{box-sizing:border-box}body{
-      margin:0;display:flex;justify-content:center;align-items:center;
-      min-height:100vh;background:#f2f5f7;font-family:"Vazirmatn",sans-serif
-    }
-    .box{background:#fff;padding:40px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.1);width:100%;max-width:380px}
-    h1{margin:0 0 20px;font-size:1.4rem;text-align:center}
-    input{width:100%;padding:12px 14px;margin:8px 0;border:1px solid #d1d5db;border-radius:8px;font-family:inherit}
-    button{width:100%;padding:12px;margin-top:12px;border:none;border-radius:8px;background:var(--pink);color:#fff;font-weight:700;cursor:pointer}
-    button:hover{background:#d62255}
-    #msg{margin-top:18px;font-weight:700;border-radius:8px;padding:12px;display:none}
-    .ok{background:#d1fae5;color:#065f46}
-    .err{background:#fee2e2;color:#991b1b}
-  </style>
+        :root {
+            --primary-color: #f02e65;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --neutral-color: #6b7280;
+            --light-bg: #f9fafb;
+            --dark-text: #1f2937;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            color: var(--dark-text);
+        }
+
+        /* --- استایل کارت اصلی --- */
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 25px;
+            color: var(--dark-text);
+        }
+
+        /* --- استایل فرم --- */
+        .signup-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* فاصله بین فیلدها */
+            text-align: right;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--neutral-color);
+        }
+
+        .input-group input {
+            padding: 12px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Vazirmatn', sans-serif;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(240, 46, 101, 0.2);
+        }
+
+        /* --- استایل دکمه --- */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: 'Vazirmatn', sans-serif;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: #d62255;
+            transform: scale(1.05);
+        }
+        
+        .btn:disabled {
+            background-color: #f9a7bf;
+            cursor: not-allowed;
+        }
+
+        /* --- استایل بخش وضعیت --- */
+        #status-container {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+            max-height: 0;
+            overflow: hidden;
+        }
+        
+        #status-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 500px; /* ارتفاع کافی برای نمایش محتوا */
+        }
+
+        .status-success { background-color: #d1fae5; color: #065f46; border: 1px solid var(--success-color); }
+        .status-error { background-color: #fee2e2; color: #991b1b; border: 1px solid var(--error-color); }
+        .status-loading { background-color: #e0e7ff; color: #3730a3; border: 1px solid #6366f1; }
+        
+        #details {
+            margin-top: 15px;
+            font-family: monospace;
+            text-align: left;
+            direction: ltr;
+            background-color: rgba(0,0,0,0.03);
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 0.85rem;
+            color: var(--neutral-color);
+        }
+    </style>
 </head>
 <body>
 
-  <div class="box">
-    <h1>فرم ثبت‌نام</h1>
+    <div class="container">
+        <div class="card">
+            <h1>ایجاد کاربر جدید</h1>
+            
+            <form id="signup-form" class="signup-form">
+                <div class="input-group">
+                    <label for="name">نام کامل</label>
+                    <input type="text" id="name" name="name" placeholder="مثلا: ابوالفضل اکبری" required>
+                </div>
+                <div class="input-group">
+                    <label for="email">آدرس ایمیل</label>
+                    <input type="email" id="email" name="email" placeholder="example@email.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">رمز عبور</label>
+                    <input type="password" id="password" name="password" placeholder="حداقل ۸ کاراکتر" required minlength="8">
+                </div>
+                
+                <button type="submit" id="submit-btn" class="btn">ایجاد حساب کاربری</button>
+            </form>
 
-    <input id="name"  type="text"     placeholder="نام (اختیاری)" />
-    <input id="email" type="email"    placeholder="ایمیل" />
-    <input id="pass"  type="password" placeholder="رمز عبور" />
+            <div id="status-container">
+                <p id="status-message"></p>
+                <pre id="details"></pre>
+            </div>
+        </div>
+    </div>
 
-    <button id="signup">ثبت نام</button>
+    <!-- ایمپورت کردن کتابخانه Appwrite Web SDK (با آدرس صحیح و جدید) -->
+    <script type="module">
+        // ایمپورت کردن کلاس‌های مورد نیاز از Appwrite SDK
+        import { Client, Account, ID, AppwriteException } from 'https://cdn.jsdelivr.net/npm/appwrite@14.0.1/dist/browser/appwrite.min.js';
 
-    <div id="msg"></div>
-  </div>
+        // --- تعریف ثابت‌ها و اطلاعات پروژه شما ---
+        const PROJECT_ID = '68d024f50002176ce603';
+        const API_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
 
-  <script type="module">
-    import { Client, Account, ID, AppwriteException } from
-      "https://cdn.jsdelivr.net/npm/appwrite@13/dist/browser/appwrite.min.js";
+        // --- دسترسی به عناصر HTML ---
+        const signupForm = document.getElementById('signup-form');
+        const submitButton = document.getElementById('submit-btn');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        
+        const statusContainer = document.getElementById('status-container');
+        const statusMessage = document.getElementById('status-message');
+        const detailsContainer = document.getElementById('details');
+        
+        // --- مقداردهی اولیه Appwrite Client ---
+        const client = new Client();
+        client
+            .setEndpoint(API_ENDPOINT)
+            .setProject(PROJECT_ID);
 
-    /* ------ تنظیمات پروژه ------ */
-    const PROJECT  = "68d024f50002176ce603";
-    const ENDPOINT = "https://fra.cloud.appwrite.io";
+        const account = new Account(client);
 
-    const client  = new Client().setEndpoint(ENDPOINT).setProject(PROJECT);
-    const account = new Account(client);
+        // --- تابع اصلی برای ایجاد کاربر ---
+        async function createUser(event) {
+            event.preventDefault(); // جلوگیری از رفرش شدن صفحه
 
-    /* ------ عناصر صفحه ------ */
-    const $ = (id)=>document.getElementById(id);
-    const msgBox = $("msg");
+            // 1. آماده‌سازی UI برای ارسال درخواست
+            submitButton.disabled = true;
+            submitButton.textContent = 'در حال ارسال...';
+            updateUI('loading', 'در حال ایجاد حساب کاربری...', '');
 
-    function show(type,text){
-      msgBox.className = type==="ok" ? "ok" : "err";
-      msgBox.textContent = text;
-      msgBox.style.display = "block";
-    }
+            try {
+                // 2. خواندن مقادیر از فرم
+                const name = nameInput.value;
+                const email = emailInput.value;
+                const password = passwordInput.value;
 
-    $("signup").addEventListener("click", async ()=>{
-      const email = $("email").value.trim();
-      const pass  = $("pass").value;
-      const name  = $("name").value.trim();
+                // 3. ارسال درخواست ایجاد کاربر به سرور Appwrite
+                // از ID.unique() برای ساخت یک شناسه یکتا برای کاربر استفاده می‌کنیم
+                const newUser = await account.create(ID.unique(), email, password, name);
 
-      if(!email || !pass){
-        show("err","ایمیل و رمز عبور الزامی است!");
-        return;
-      }
+                // 4. نمایش پیام موفقیت
+                console.log('User created successfully:', newUser);
+                updateUI(
+                    'success',
+                    '✅ حساب کاربری با موفقیت ایجاد شد!',
+                    `کاربر جدید با اطلاعات زیر در سرور ذخیره شد:\n\nID: ${newUser.$id}\nEmail: ${newUser.email}\nName: ${newUser.name}`
+                );
+                signupForm.reset(); // خالی کردن فرم
 
-      $("signup").disabled = true;
-      show("","در حال ثبت…");
+            } catch (error) {
+                // 5. مدیریت و نمایش خطا
+                console.error('Failed to create user:', error);
+                let errorMessage = 'یک خطای ناشناخته رخ داد.';
+                let errorDetails = error.message;
 
-      try{
-        /* -------- ساخت کاربر -------- */
-        await account.create(ID.unique(), email, pass, name || undefined);
-
-        /* -------- ورود (session) -------- */
-        await account.createEmailSession(email, pass);
-
-        show("ok","✅ کاربر ایجاد و لاگین شد! اکنون در کنسول Appwrite → Auth می‌بینید.");
-      }
-      catch(e){
-        if(e instanceof AppwriteException){
-          show("err",`❌ ${e.message} (کد ${e.code})`);
-        }else{
-          show("err","❌ خطای ارتباطی: "+e.message);
+                if (error instanceof AppwriteException) {
+                    errorMessage = '❌ خطا در ایجاد حساب کاربری!';
+                    errorDetails = `Code: ${error.code}\nMessage: ${error.message}\nType: ${error.type}`;
+                    // خطای رایج: ایمیل تکراری
+                    if (error.code === 409) {
+                        errorMessage = '❌ این ایمیل قبلاً ثبت شده است!';
+                    }
+                }
+                
+                updateUI('error', errorMessage, errorDetails);
+            } finally {
+                // 6. بازگرداندن UI به حالت اولیه
+                submitButton.disabled = false;
+                submitButton.textContent = 'ایجاد حساب کاربری';
+            }
         }
-      }
-      finally{
-        $("signup").disabled = false;
-      }
-    });
-  </script>
+        
+        // --- تابع کمکی برای آپدیت کردن UI ---
+        function updateUI(type, message, details) {
+            statusContainer.className = `status-${type} visible`;
+            statusMessage.textContent = message;
+            detailsContainer.textContent = details;
+        }
+
+        // --- افزودن رویداد submit به فرم ---
+        signupForm.addEventListener('submit', createUser);
+
+    </script>
 </body>
 </html>
