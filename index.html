@@ -3,384 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لابی صوتی عمومی (کیفیت استودیویی)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>تست اتصال به سرور Appwrite</title>
+    
+    <!-- Import Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: 'Vazirmatn', sans-serif; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loader {
-            border: 4px solid rgba(0, 0, 0, .1);
-            border-left-color: #4f46e5;
-            animation: spin 1s linear infinite;
-        }
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.5); display: flex;
-            align-items: center; justify-content: center; z-index: 1000;
-        }
-        .modal-content {
-            background: white; padding: 2rem; border-radius: 0.75rem;
-            text-align: center; max-width: 90%; width: 400px;
-        }
-        .user-bubble {
-            display: inline-flex;
+        /* CSS Styles */
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
             align-items: center;
-            background-color: #eef2ff;
-            color: #4338ca;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            margin: 0.25rem;
-            transition: box-shadow 0.2s ease-in-out;
+            height: 100vh;
+            margin: 0;
+            color: #333;
         }
-        /* --- PRO UPGRADE: Speaking Indicator Styles --- */
-        .speaking-indicator {
-            width: 12px;
-            height: 12px;
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            border-top: 5px solid #6c757d; /* Default border color */
+            transition: border-color 0.5s ease;
+        }
+
+        h1 {
+            color: #1d2d50;
+            margin-bottom: 30px;
+        }
+
+        .status-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+        }
+
+        /* Loader Animation */
+        .loader {
+            border: 6px solid #e0e0e0; /* Light grey */
+            border-top: 6px solid #3498db; /* Blue */
             border-radius: 50%;
-            background-color: #9ca3af; /* Gray when silent */
-            margin-left: 10px; /* For RTL layout */
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 1);
+            width: 50px;
+            height: 50px;
+            animation: spin 1.5s linear infinite;
+            margin-bottom: 20px;
         }
-        .is-speaking .speaking-indicator {
-            background-color: #22c55e; /* Green when speaking */
-            animation: pulse 1.5s infinite;
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        
+        #status-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #555;
+            transition: color 0.5s ease;
+        }
+        
+        /* Success State */
+        .status-success {
+            border-top-color: #28a745; /* Green */
+        }
+        .status-success #status-message {
+            color: #28a745;
+        }
+
+        /* Error State */
+        .status-error {
+            border-top-color: #dc3545; /* Red */
+        }
+        .status-error #status-message {
+            color: #dc3545;
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+<body>
 
-    <div class="container mx-auto p-4 max-w-2xl w-full">
-        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-
-            <div id="room-view">
-                <h1 class="text-2xl md:text-3xl font-bold text-center text-indigo-600 mb-2">لابی عمومی (کیفیت استودیویی)</h1>
-                 <p id="status" class="text-gray-500 text-center mb-6 h-6">در حال اتصال...</p>
-
-                <div class="mb-4">
-                    <h2 class="font-bold text-lg mb-2 text-center">کاربران حاضر</h2>
-                    <div id="users-container" class="min-h-[50px] bg-gray-50 rounded-lg p-2 flex flex-wrap justify-center items-center">
-                        <span id="no-users-text" class="text-gray-400">هنوز کسی اینجا نیست...</span>
-                    </div>
-                </div>
-
-                <div id="audio-container" class="mt-4 space-y-2">
-                    <video id="localAudio" muted autoplay playsinline class="hidden"></video>
-                </div>
-                
-                <div id="loading-spinner" class="loader w-8 h-8 rounded-full mx-auto my-4"></div>
-
-                <div class="mt-8 flex justify-center gap-4">
-                    <button id="hangupBtn" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-transform transform hover:scale-105 hidden">
-                        خروج از لابی
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="text-center mt-4 text-xs text-gray-400">
-            ساخته شده با WebRTC و Firebase
-        </div>
-    </div>
-    
-    <div id="modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <p id="modal-text" class="mb-4"></p>
-            <button id="modal-close" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">باشه</button>
+    <div class="container" id="main-container">
+        <h1>تست اتصال به سرور Appwrite</h1>
+        <div class="status-container">
+            <div class="loader" id="loader"></div>
+            <p id="status-message">در حال تلاش برای اتصال به سرور...</p>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, deleteDoc, writeBatch, getDocs, setDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Appwrite Web SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1/dist/browser/appwrite.min.js"></script>
 
-        // --- پیکربندی Firebase شما (پروژه voic-acfa3) ---
-        // لطفا مطمئن شوید که messagingSenderId و appId را از تنظیمات پروژه خود در کنسول Firebase کپی کرده‌اید.
-        const firebaseConfig = {
-          apiKey: "AIzaSyAk3aehEN_aCT0VHE29sSIi72Htpb7vbAk",
-          authDomain: "voic-acfa3.firebaseapp.com",
-          projectId: "voic-acfa3",
-          storageBucket: "voic-acfa3.firebasestorage.app",
-          messagingSenderId: "123456789012", // این را با مقدار صحیح از کنسول Firebase خود جایگزین کنید
-          appId: "1:123456789012:web:abcdef1234567890abcdef" // این را با مقدار صحیح از کنسول Firebase خود جایگزین کنید
-        };
-        // ---------------------------------------------------
+    <script>
+        // JavaScript Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            // اطلاعات سرور شما
+            const APPWRITE_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
+            const APPWRITE_PROJECT_ID = '68d024f50002176ce603';
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = firebaseConfig.projectId; // appId از projectId گرفته می‌شود و در مسیر Firestore استفاده می‌شود
-        
-        const servers = { iceServers: [ { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] } ] };
-        const publicRoomId = "multi-user-lobby-pro-hq";
-        let localStream, myId;
-        let peerConnections = {};
-        let membersUnsubscribe, signalsUnsubscribe;
+            // انتخاب عناصر HTML
+            const mainContainer = document.getElementById('main-container');
+            const loader = document.getElementById('loader');
+            const statusMessage = document.getElementById('status-message');
 
-        const hangupBtn = document.getElementById('hangupBtn');
-        const localAudio = document.getElementById('localAudio');
-        const statusText = document.getElementById('status');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const usersContainer = document.getElementById('users-container');
-        const noUsersText = document.getElementById('no-users-text');
-        const modal = document.getElementById('modal');
-        const modalText = document.getElementById('modal-text');
-        const modalClose = document.getElementById('modal-close');
+            // مقداردهی اولیه Appwrite SDK
+            const { Client, Account } = Appwrite;
+            const client = new Client();
 
-        function showModal(message) { modalText.innerText = message; modal.classList.remove('hidden'); }
-        modalClose.onclick = () => modal.classList.add('hidden');
-        
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                myId = user.uid;
-                joinPublicLobby();
-            } else {
-                signInAnonymously(auth).catch(err => showModal(`Authentication Error: ${err.message}`));
+            client
+                .setEndpoint(APPWRITE_ENDPOINT)
+                .setProject(APPWRITE_PROJECT_ID);
+
+            const account = new Account(client);
+
+            // تابع تست اتصال
+            async function testConnection() {
+                try {
+                    // ما تلاش میکنیم اطلاعات حساب کاربری را بگیریم.
+                    // چون لاگین نیستیم، این دستور باید یک خطا برگرداند.
+                    // اگر خطای 401 (عدم دسترسی) دریافت کنیم، یعنی اتصال موفق بوده است.
+                    await account.get();
+                    
+                    // این بخش به ندرت اجرا می‌شود (مگر اینکه یک سشن فعال از قبل وجود داشته باشد)
+                    setSuccessState("اتصال موفقیت‌آمیز بود. (یک جلسه فعال در مرورگر شما وجود دارد)");
+
+                } catch (error) {
+                    // بررسی می‌کنیم که آیا خطا از سمت سرور Appwrite است یا یک خطای شبکه
+                    if (error.code && error.code >= 400) {
+                        // این حالت موفقیت‌آمیز است! سرور به درخواست ما پاسخ داده است.
+                        // خطای 401 طبیعی است چون ما لاگین نکرده‌ایم.
+                        setSuccessState(`اتصال موفقیت‌آمیز بود. سرور Appwrite به درستی پاسخ داد. (پیام سرور: ${error.message})`);
+                    } else {
+                        // این یک خطای شبکه است (مانند CORS، DNS یا قطع بودن اینترنت)
+                        // نکته: اگر با خطای CORS مواجه شدید، باید دامنه خود را در پنل Appwrite در بخش Platforms اضافه کنید.
+                        // اگر این فایل را به صورت محلی باز میکنید، 'localhost' را اضافه کنید.
+                        setFailureState(`اتصال با خطا مواجه شد. لطفاً تنظیمات شبکه و CORS در پنل Appwrite را بررسی کنید. (پیام خطا: ${error.message})`);
+                    }
+                }
             }
+
+            function setSuccessState(message) {
+                loader.classList.add('hidden');
+                statusMessage.textContent = message;
+                mainContainer.classList.add('status-success');
+            }
+
+            function setFailureState(message) {
+                loader.classList.add('hidden');
+                statusMessage.textContent = message;
+                mainContainer.classList.add('status-error');
+            }
+
+            // اجرای تست پس از 1 ثانیه برای نمایش بهتر انیمیشن لودینگ
+            setTimeout(testConnection, 1000);
         });
-
-        async function joinPublicLobby() {
-            try {
-                const audioConstraints = {
-                    audio: {
-                        echoCancellation: true, noiseSuppression: true, autoGainControl: true,
-                        channelCount: 2, sampleRate: 48000,
-                    },
-                    video: false,
-                };
-                localStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
-                localAudio.srcObject = localStream;
-
-                statusText.innerText = 'در حال پیوستن به لابی...';
-                
-                // مسیر صحیح در Firestore بر اساس کد شما
-                const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
-                const membersCol = collection(roomRef, "members");
-                // setDoc برای اضافه کردن/به‌روزرسانی سند عضو با ID فعلی کاربر
-                await setDoc(doc(membersCol, myId), { joinedAt: Date.now() });
-
-                membersUnsubscribe = onSnapshot(membersCol, (snapshot) => {
-                    snapshot.docChanges().forEach(async (change) => {
-                        const remoteId = change.doc.id;
-                        if (remoteId === myId) return;
-
-                        if (change.type === "added") {
-                            statusText.innerText = `کاربر ${remoteId.substring(0,6)} وارد شد.`;
-                            peerConnections[remoteId] = createPeerConnection(remoteId);
-                            if (myId < remoteId) await sendOffer(remoteId);
-                        } else if (change.type === "removed") {
-                           statusText.innerText = `کاربر ${remoteId.substring(0,6)} خارج شد.`;
-                           closeConnection(remoteId);
-                        }
-                        updateUsersUI();
-                    });
-                     updateUsersUI();
-                });
-                
-                const signalsCol = collection(roomRef, "signals");
-                const q = query(signalsCol, where("to", "==", myId)); // فقط سیگنال‌های مربوط به خود را بخوان
-                signalsUnsubscribe = onSnapshot(q, (snapshot) => {
-                    (async () => {
-                        for (const document of snapshot.docs) {
-                            const signalData = document.data();
-                            const remoteId = signalData.from;
-                            const pc = peerConnections[remoteId];
-
-                            if (!pc) { await deleteDoc(document.ref); continue; }
-
-                            try {
-                                if (signalData.offer && pc.signalingState === 'stable') {
-                                    await pc.setRemoteDescription(new RTCSessionDescription(signalData.offer));
-                                    const answer = await pc.createAnswer();
-                                    const hqAnswer = setAudioQuality(answer);
-                                    await pc.setLocalDescription(hqAnswer);
-                                    await sendSignal(remoteId, { answer: hqAnswer });
-                                } else if (signalData.answer && pc.signalingState === 'have-local-offer') {
-                                    await pc.setRemoteDescription(new RTCSessionDescription(signalData.answer));
-                                } else if (signalData.iceCandidate && pc.remoteDescription) {
-                                    await pc.addIceCandidate(new RTCIceCandidate(signalData.iceCandidate));
-                                }
-                            } catch (err) { console.error("Signal Processing Error:", err); }
-                            // پس از پردازش سیگنال، آن را حذف کن
-                            await deleteDoc(document.ref);
-                        }
-                    })();
-                });
-                
-                loadingSpinner.classList.add('hidden');
-                hangupBtn.classList.remove('hidden');
-
-            } catch (err) {
-                showModal(`خطای ورود به لابی: ${err.message}`);
-                statusText.innerText = "خطا در اتصال";
-                loadingSpinner.classList.add('hidden');
-            }
-        }
-        
-        function setAudioQuality(sdpObject) {
-            let sdp = sdpObject.sdp;
-            // --- PRO UPGRADE: More advanced Opus parameters ---
-            const opusParams = 'useinbandfec=1;stereo=1;sprop-stereo=1;usedtx=0;maxaveragebitrate=128000;maxplaybackrate=48000';
-            const opusRegex = /a=rtpmap:(\d+) opus\/48000\/2/i;
-            const match = sdp.match(opusRegex);
-            if (match) {
-                const payloadType = match[1];
-                const fmtpRegex = new RegExp(`a=fmtp:${payloadType} .*`, 'i');
-                const newFmtpLine = `a=fmtp:${payloadType} ${opusParams}`;
-                if (sdp.match(fmtpRegex)) {
-                    sdp = sdp.replace(fmtpRegex, newFmtpLine);
-                } else {
-                    sdp = sdp.replace(match[0], `${match[0]}\r\n${newFmtpLine}`);
-                }
-            }
-            return { type: sdpObject.type, sdp };
-        }
-        
-        // --- PRO UPGRADE: Audio visualizer for speaking indicators ---
-        function setupAudioVisualizer(stream, remoteId) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const analyser = audioContext.createAnalyser();
-            const source = audioContext.createMediaStreamSource(stream);
-            source.connect(analyser);
-
-            analyser.fftSize = 256;
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            
-            peerConnections[remoteId].visualizer = { audioContext, animationFrameId: null };
-
-            const draw = () => {
-                const userBubble = document.getElementById(`user-${remoteId}`);
-                if (!userBubble) {
-                    cancelAnimationFrame(peerConnections[remoteId].visualizer.animationFrameId);
-                    return;
-                }
-
-                analyser.getByteFrequencyData(dataArray);
-                let sum = dataArray.reduce((a, b) => a + b, 0);
-                let average = sum / bufferLength;
-                
-                if (average > 20) { // Threshold for speaking
-                    userBubble.classList.add('is-speaking');
-                } else {
-                    userBubble.classList.remove('is-speaking');
-                }
-                
-                peerConnections[remoteId].visualizer.animationFrameId = requestAnimationFrame(draw);
-            };
-            draw();
-        }
-
-        function createPeerConnection(remoteId) {
-            const pc = new RTCPeerConnection(servers);
-            
-            pc.onicecandidate = e => e.candidate && sendSignal(remoteId, { iceCandidate: e.candidate.toJSON() });
-
-            pc.ontrack = event => {
-                let remoteAudio = document.getElementById(`audio-${remoteId}`);
-                if (!remoteAudio) {
-                    remoteAudio = document.createElement('audio');
-                    remoteAudio.id = `audio-${remoteId}`;
-                    remoteAudio.autoplay = true;
-                    remoteAudio.playsInline = true;
-                    document.getElementById('audio-container').appendChild(remoteAudio);
-                    remoteAudio.srcObject = event.streams[0];
-                    setupAudioVisualizer(event.streams[0], remoteId); // Setup visualizer on track
-                }
-            };
-
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            return pc;
-        }
-
-        async function sendOffer(remoteId) {
-            const pc = peerConnections[remoteId];
-            if (!pc) return;
-            try {
-                const offer = await pc.createOffer();
-                const hqOffer = setAudioQuality(offer);
-                await pc.setLocalDescription(hqOffer);
-                await sendSignal(remoteId, { offer: hqOffer });
-            } catch (err) { console.error("Offer Error:", err); }
-        }
-        
-        async function sendSignal(toId, data) {
-            const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
-            const signalsCol = collection(roomRef, "signals");
-            await addDoc(signalsCol, { ...data, from: myId, to: toId });
-        }
-        
-        function closeConnection(remoteId) {
-            const pcData = peerConnections[remoteId];
-            if (pcData) {
-                if (pcData.visualizer) {
-                    cancelAnimationFrame(pcData.visualizer.animationFrameId);
-                    pcData.visualizer.audioContext.close();
-                }
-                pcData.close();
-                delete peerConnections[remoteId];
-            }
-            document.getElementById(`audio-${remoteId}`)?.remove();
-        }
-
-        function updateUsersUI() {
-            const memberIds = new Set(Object.keys(peerConnections));
-            if (myId) memberIds.add(myId);
-            
-            usersContainer.innerHTML = '';
-            
-            if (memberIds.size <= 1) { // اگر فقط خود کاربر هستیم یا هیچکس نیست
-                 usersContainer.appendChild(noUsersText);
-            } else if (usersContainer.contains(noUsersText)) {
-                 noUsersText.remove();
-            }
-
-            memberIds.forEach(id => {
-                 const userBubble = document.createElement('div');
-                 userBubble.className = 'user-bubble';
-                 userBubble.id = `user-${id}`;
-                 
-                 const indicator = document.createElement('div');
-                 indicator.className = 'speaking-indicator';
-
-                 const nameSpan = document.createElement('span');
-                 nameSpan.textContent = `کاربر ${id.substring(0, 6)}...` + (id === myId ? ' (شما)' : '');
-                 
-                 userBubble.appendChild(nameSpan);
-                 userBubble.appendChild(indicator);
-                 usersContainer.appendChild(userBubble);
-            });
-        }
-        
-        async function hangup() {
-            if (myId) {
-                const roomRef = doc(db, `artifacts/${appId}/public/data/rooms`, publicRoomId);
-                // حذف سند عضویت خود کاربر
-                await deleteDoc(doc(collection(roomRef, "members"), myId)).catch(console.error);
-            }
-
-            if (localStream) localStream.getTracks().forEach(track => track.stop());
-            Object.keys(peerConnections).forEach(id => closeConnection(id));
-            peerConnections = {};
-
-            if (membersUnsubscribe) membersUnsubscribe();
-            if (signalsUnsubscribe) signalsUnsubscribe();
-
-            window.location.reload(); // صفحه را رفرش می‌کند تا وضعیت اولیه برگردد
-        }
-
-        hangupBtn.onclick = hangup;
-        window.addEventListener('beforeunload', hangup);
-
     </script>
+
 </body>
 </html>
