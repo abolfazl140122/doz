@@ -174,11 +174,6 @@
         </div>
     </div>
 
-    <!-- 
-        ===========================================================
-        ==>   تغییر اصلی و مهم در این خط است   <==
-        ===========================================================
-     -->
     <script type="module">
         // آدرس CDN به آخرین نسخه پایدار و صحیح تغییر کرد
         import { Client, Account, ID, AppwriteException } from "https://cdn.jsdelivr.net/npm/appwrite@15.0.0/dist/https-sdk.js";
@@ -187,72 +182,80 @@
         const PROJECT_ID = '68d024f50002176ce603';
         const API_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
 
-        const signupForm = document.getElementById('signup-form');
-        const submitButton = document.getElementById('submit-btn');
-        const nameInput = document.getElementById('name');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        
-        const statusContainer = document.getElementById('status-container');
-        const statusMessage = document.getElementById('status-message');
-        const detailsContainer = document.getElementById('details');
-        
-        const client = new Client();
-        client
-            .setEndpoint(API_ENDPOINT)
-            .setProject(PROJECT_ID);
+        // صبر می‌کنیم تا DOM کاملاً لود شود
+        document.addEventListener('DOMContentLoaded', function() {
+            const signupForm = document.getElementById('signup-form');
+            const submitButton = document.getElementById('submit-btn');
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            
+            const statusContainer = document.getElementById('status-container');
+            const statusMessage = document.getElementById('status-message');
+            const detailsContainer = document.getElementById('details');
+            
+            const client = new Client();
+            client
+                .setEndpoint(API_ENDPOINT)
+                .setProject(PROJECT_ID);
 
-        const account = new Account(client);
+            const account = new Account(client);
 
-        async function createUser(event) {
-            event.preventDefault(); 
+            async function createUser(event) {
+                event.preventDefault(); 
+                event.stopPropagation();
 
-            submitButton.disabled = true;
-            submitButton.textContent = 'در حال ارسال...';
-            updateUI('loading', 'در حال ایجاد حساب کاربری...', '');
+                console.log('Form submitted!');
 
-            try {
-                const name = nameInput.value;
-                const email = emailInput.value;
-                const password = passwordInput.value;
+                submitButton.disabled = true;
+                submitButton.textContent = 'در حال ارسال...';
+                updateUI('loading', 'در حال ایجاد حساب کاربری...', '');
 
-                const newUser = await account.create(ID.unique(), email, password, name);
+                try {
+                    const name = nameInput.value;
+                    const email = emailInput.value;
+                    const password = passwordInput.value;
 
-                console.log('User created successfully:', newUser);
-                updateUI(
-                    'success',
-                    '✅ حساب کاربری با موفقیت ایجاد شد!',
-                    `کاربر جدید با اطلاعات زیر در سرور ذخیره شد:\n\nID: ${newUser.$id}\nEmail: ${newUser.email}\nName: ${newUser.name}`
-                );
-                signupForm.reset();
+                    console.log('Creating user:', email);
 
-            } catch (error) {
-                console.error('Failed to create user:', error);
-                let errorMessage = 'یک خطای ناشناخته رخ داد.';
-                let errorDetails = error.message;
+                    const newUser = await account.create(ID.unique(), email, password, name);
 
-                if (error instanceof AppwriteException) {
-                    errorMessage = '❌ خطا در ایجاد حساب کاربری!';
-                    errorDetails = `Code: ${error.code}\nMessage: ${error.message}\nType: ${error.type}`;
-                    if (error.code === 409) {
-                        errorMessage = '❌ این ایمیل قبلاً ثبت شده است!';
+                    console.log('User created successfully:', newUser);
+                    updateUI(
+                        'success',
+                        '✅ حساب کاربری با موفقیت ایجاد شد!',
+                        `کاربر جدید با اطلاعات زیر در سرور ذخیره شد:\n\nID: ${newUser.$id}\nEmail: ${newUser.email}\nName: ${newUser.name}`
+                    );
+                    signupForm.reset();
+
+                } catch (error) {
+                    console.error('Failed to create user:', error);
+                    let errorMessage = 'یک خطای ناشناخته رخ داد.';
+                    let errorDetails = error.message;
+
+                    if (error instanceof AppwriteException) {
+                        errorMessage = '❌ خطا در ایجاد حساب کاربری!';
+                        errorDetails = `Code: ${error.code}\nMessage: ${error.message}\nType: ${error.type}`;
+                        if (error.code === 409) {
+                            errorMessage = '❌ این ایمیل قبلاً ثبت شده است!';
+                        }
                     }
+                    
+                    updateUI('error', errorMessage, errorDetails);
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'ایجاد حساب کاربری';
                 }
-                
-                updateUI('error', errorMessage, errorDetails);
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'ایجاد حساب کاربری';
             }
-        }
-        
-        function updateUI(type, message, details) {
-            statusContainer.className = `status-${type} visible`;
-            statusMessage.textContent = message;
-            detailsContainer.textContent = details;
-        }
+            
+            function updateUI(type, message, details) {
+                statusContainer.className = `status-${type} visible`;
+                statusMessage.textContent = message;
+                detailsContainer.textContent = details;
+            }
 
-        signupForm.addEventListener('submit', createUser);
+            signupForm.addEventListener('submit', createUser, false);
+        });
 
     </script>
 </body>
